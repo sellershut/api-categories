@@ -2,7 +2,9 @@ mod state;
 mod telemetry;
 
 use anyhow::Result;
-use axum::{response::Html, routing::get, Router};
+use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
+use async_graphql_axum::GraphQL;
+use axum::{response::{Html, IntoResponse}, routing::get, Router};
 use tokio::signal;
 use tracing::info;
 
@@ -10,11 +12,13 @@ use tracing::info;
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
 
-    let _tracer = telemetry::initialise();
+    let tracer = telemetry::initialise()?;
 
     let state = state::AppState::try_from_env()?;
 
-    let app = Router::new().route("/", get(handler));
+    let schema = api_interface::create_schema(tracer);
+
+    let app = Router::new().route("/", get(handler).post_service(GraphQL::new(schema)));
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", state.port)).await?;
     info!("listening on {}", listener.local_addr()?);
@@ -26,8 +30,10 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn handler() -> Html<&'static str> {
-    Html("<h1>Hello, World!</h1>")
+async fn handler() -> impl IntoResponse {
+    Html(playground_source(
+        GraphQLPlaygroundConfig::new("/").subscription_endpoint("/ws"),
+    ))
 }
 
 async fn shutdown_signal() {

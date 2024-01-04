@@ -23,7 +23,7 @@ pub fn init_tracer() -> anyhow::Result<Tracer> {
 
     let filter = Targets::new()
         .with_target("api_categories", LevelFilter::TRACE)
-        .with_default(LevelFilter::INFO);
+        .with_default(LevelFilter::TRACE);
 
     tracing_subscriber::registry()
         .with(
@@ -31,7 +31,7 @@ pub fn init_tracer() -> anyhow::Result<Tracer> {
                 // axum logs rejections from built-in extractors with the `axum::rejection`
                 // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
                 format!(
-                    "{crate_target}=trace,tower_http=debug,axum::rejection=trace,h2=warn,tokio_util=warn,hyper=debug,tonic=debug,tower=debug",
+                    "{crate_target}=trace,api_interface=trace,tower_http=debug,axum::rejection=trace,h2=warn,tokio_util=warn,hyper=debug,tonic=debug,tower=debug",
                 )
                 .into()
             }),
