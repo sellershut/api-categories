@@ -1,17 +1,23 @@
 mod state;
+mod telemetry;
 
 use anyhow::Result;
 use axum::{response::Html, routing::get, Router};
 use tokio::signal;
+use tracing::info;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    dotenvy::dotenv().ok();
+
+    telemetry::initialise();
+
     let state = state::AppState::try_from_env()?;
 
     let app = Router::new().route("/", get(handler));
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", state.port)).await?;
-    println!("listening on {}", listener.local_addr().unwrap());
+    info!("listening on {}", listener.local_addr()?);
 
     axum::serve(listener, app)
         .with_graceful_shutdown(shutdown_signal())

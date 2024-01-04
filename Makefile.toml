@@ -1,5 +1,6 @@
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+RUST_LOG = "trace"
 
 [tasks.format]
 install_crate = "rustfmt"

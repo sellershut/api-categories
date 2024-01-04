@@ -1,17 +1,15 @@
 mod env;
 
 use anyhow::{Ok, Result};
-use tracing::{instrument, warn};
+use tracing::instrument;
 
 pub struct AppState {
     pub port: u16,
 }
 
 impl AppState {
-    #[instrument]
+    #[instrument(name = "env.cfg")]
     pub fn try_from_env() -> Result<AppState> {
-        dotenvy::dotenv().ok();
-
         let port: u16 = env::extract_variable("PORT", "3000").parse()?;
 
         Ok(AppState { port })
