@@ -1,5 +1,7 @@
+use opentelemetry_sdk::trace::Tracer;
+
 mod tracing;
 
-pub fn initialise() {
-    tracing::init_tracer();
+pub fn initialise() -> anyhow::Result<Tracer> {
+    tracing::init_tracer()
 }

@@ -10,7 +10,7 @@ use tracing::info;
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
 
-    telemetry::initialise();
+    let _tracer = telemetry::initialise();
 
     let state = state::AppState::try_from_env()?;
 
