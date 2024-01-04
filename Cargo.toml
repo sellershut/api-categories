@@ -3,3 +3,7 @@ members = ["crates/*"]
 resolver = "2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[workspace.dependencies]
+tokio = "1.35.1"
+tracing = "0.1.40"
