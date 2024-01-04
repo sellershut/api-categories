@@ -1,12 +1,16 @@
+mod state;
+
 use anyhow::Result;
 use axum::{response::Html, routing::get, Router};
 use tokio::signal;
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let state = state::AppState::try_from_env()?;
+
     let app = Router::new().route("/", get(handler));
 
-    let listener = tokio::net::TcpListener::bind("127.0.0.1:3000").await?;
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", state.port)).await?;
     println!("listening on {}", listener.local_addr().unwrap());
 
     axum::serve(listener, app)
