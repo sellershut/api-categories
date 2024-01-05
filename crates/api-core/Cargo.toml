@@ -9,6 +9,8 @@ edition = "2021"
 async-graphql = { workspace = true, optional = true }
 serde = { workspace = true, optional = true }
 surrealdb = { workspace = true, optional = true }
+thiserror.workspace = true
+trait-variant.workspace = true
 
 [features]
 default = []

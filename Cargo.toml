@@ -5,9 +5,13 @@ resolver = "2"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [workspace.dependencies]
+api-core = { path = "./crates/api-core" }
 async-graphql = { git = "https://github.com/async-graphql/async-graphql", default-features = false }
 async-graphql-axum = { git = "https://github.com/async-graphql/async-graphql" }
 opentelemetry = "0.21.0"
+serde = "1.0.194"
+surrealdb = "1.0.2"
 thiserror = "1.0.56"
 tokio = "1.35.1"
 tracing = "0.1.40"
+trait-variant = "0.1.1"

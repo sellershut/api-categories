@@ -1,3 +1,5 @@
+pub mod api;
+
 #[cfg(feature = "async-graphql")]
 use async_graphql::*;
 
@@ -40,7 +42,7 @@ struct Id(surrealdb::sql::Thing);
 #[cfg_attr(all(feature = "async-graphql", feature = "surrealdb"), Object)]
 impl Id {
     async fn value(&self) -> String {
-        self.0.to_string()
+        self.0.to_raw()
     }
 }
 
