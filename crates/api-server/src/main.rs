@@ -16,7 +16,7 @@ async fn main() -> Result<()> {
 
     let state = state::AppState::try_from_env()?;
 
-    let schema = api_interface::create_schema(tracer);
+    let schema = api_interface::create_schema(tracer).await;
 
     let app = Router::new().route("/", get(handler).post_service(GraphQL::new(schema)));
 

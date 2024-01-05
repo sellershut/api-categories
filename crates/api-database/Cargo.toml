@@ -7,4 +7,7 @@ edition = "2021"
 
 [dependencies]
 api-core = { workspace = true, features = ["serde", "surrealdb"] }
+serde.workspace = true
 surrealdb.workspace = true
+thiserror.workspace = true
+tracing.workspace = true

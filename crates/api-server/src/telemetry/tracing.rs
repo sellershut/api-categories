@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::{
@@ -8,7 +10,8 @@ use opentelemetry_sdk::{
 use opentelemetry_semantic_conventions::resource::{
     DEPLOYMENT_ENVIRONMENT, SERVICE_NAME, SERVICE_VERSION,
 };
-use tracing::level_filters::LevelFilter;
+use tokio::sync::oneshot::Sender;
+use tracing::{error, info, level_filters::LevelFilter};
 use tracing_subscriber::{filter::Targets, layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
 use crate::state::env::extract_variable;
@@ -17,37 +20,49 @@ pub fn init_tracer() -> anyhow::Result<Tracer> {
     let pkg_name = env!("CARGO_PKG_NAME");
     let pkg_ver = env!("CARGO_PKG_VERSION");
 
-    let tracer = tracer(pkg_name, pkg_ver)?;
-
-    let crate_target = pkg_name.replace('-', "_");
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    let tracer = tracer(pkg_name, pkg_ver, tx)?;
 
     let filter = Targets::new()
         .with_target("api_categories", LevelFilter::TRACE)
         .with_default(LevelFilter::TRACE);
 
+    let log_levels = log_levels(pkg_name);
+    println!("{log_levels}");
     tracing_subscriber::registry()
         .with(
-            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-                // axum logs rejections from built-in extractors with the `axum::rejection`
-                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-                format!(
-                    "{crate_target}=trace,api_interface=trace,tower_http=debug,axum::rejection=trace,h2=warn,tokio_util=warn,hyper=debug,tonic=debug,tower=debug",
-                )
-                .into()
-            }),
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| log_levels.into()),
         )
         .with(tracing_subscriber::fmt::layer())
-        .with(tracing_opentelemetry::layer().with_tracer(tracer.clone()).with_filter(filter))
+        .with(
+            tracing_opentelemetry::layer()
+                .with_tracer(tracer.clone())
+                .with_filter(filter),
+        )
         .init();
+
+    tokio::spawn(async move {
+        match rx.await {
+            Ok(e) => {
+                info!(collector = e, "opentelemetry enabled");
+            }
+            Err(e) => {
+                error!("{e}");
+            }
+        }
+    });
 
     Ok(tracer)
 }
 
-fn tracer(pkg_name: &str, pkg_ver: &str) -> anyhow::Result<Tracer> {
+fn tracer(pkg_name: &str, pkg_ver: &str, tx: Sender<String>) -> anyhow::Result<Tracer> {
     let collector_endpoint =
         extract_variable("OPENTELEMETRY_COLLECTOR_HOST", "http://localhost:4317");
 
     let deployment_env = extract_variable("ENV", "develop");
+
+    let _ = tx.send(collector_endpoint.clone());
 
     Ok(opentelemetry_otlp::new_pipeline()
         .tracing()
@@ -62,4 +77,29 @@ fn tracer(pkg_name: &str, pkg_ver: &str) -> anyhow::Result<Tracer> {
             KeyValue::new(DEPLOYMENT_ENVIRONMENT, deployment_env),
         ])))
         .install_batch(runtime::Tokio)?)
+}
+
+fn log_levels(pkg_name: &str) -> String {
+    let mut log_levels = HashMap::new();
+    log_levels.insert(pkg_name, "trace");
+    log_levels.insert("api_interface", "trace");
+    log_levels.insert("api_interface", "trace");
+    log_levels.insert("api_database", "trace");
+    log_levels.insert("tower", "warn");
+    log_levels.insert("h2", "warn");
+    log_levels.insert("hyper", "warn");
+    log_levels.insert("tungstenite", "warn");
+    log_levels.insert("", "debug"); // Default to empty string for unspecified crate
+
+    log_levels
+        .iter()
+        .map(|(crate_name, log_level)| {
+            if crate_name.is_empty() {
+                log_level.to_string()
+            } else {
+                format!("{}={}", crate_name, log_level).replace('-', "_")
+            }
+        })
+        .collect::<Vec<String>>()
+        .join(",")
 }

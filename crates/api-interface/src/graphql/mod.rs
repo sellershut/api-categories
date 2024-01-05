@@ -1,4 +1,5 @@
 pub(crate) mod model;
+pub(crate) mod mutation;
 
 use std::collections::HashMap;
 
@@ -6,7 +7,7 @@ use async_graphql::{EmptyMutation, EmptySubscription, Schema};
 use model::Episode;
 pub use model::QueryRoot;
 use slab::Slab;
-pub type StarWarsSchema = Schema<QueryRoot, EmptyMutation, EmptySubscription>;
+pub type StarWarsSchema = Schema<QueryRoot, mutation::Mutation, EmptySubscription>;
 
 pub struct StarWarsChar {
     id: &'static str,

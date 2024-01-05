@@ -131,7 +131,10 @@ name = "api-database"
 version = "0.1.0"
 dependencies = [
  "api-core",
+ "serde",
  "surrealdb",
+ "thiserror",
+ "tracing",
 ]
 
 [[package]]

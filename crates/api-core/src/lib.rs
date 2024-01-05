@@ -12,23 +12,23 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "async-graphql", graphql(input_name = "CategoryInput"))]
 pub struct Category {
     #[cfg(all(feature = "surrealdb", not(feature = "async-graphql")))]
-    id: surrealdb::sql::Thing,
+    pub id: surrealdb::sql::Thing,
     #[cfg(all(feature = "surrealdb", feature = "async-graphql"))]
     #[cfg_attr(
         all(feature = "async-graphql", feature = "surrealdb"),
-        graphql(skip_input)
+        graphql(skip_input), graphql(flatten)
     )]
-    id: Id,
+    pub id: Id,
     #[cfg(all(not(feature = "surrealdb"), feature = "async-graphql"))]
     #[cfg_attr(
         all(feature = "async-graphql", not(feature = "surrealdb")),
         graphql(skip_input)
     )]
-    id: String,
-    name: String,
-    sub_categories: Vec<String>,
-    image_url: Option<String>,
-    is_root: bool,
+    pub id: String,
+    pub name: String,
+    pub sub_categories: Vec<String>,
+    pub image_url: Option<String>,
+    pub is_root: bool,
 }
 
 #[cfg(all(feature = "surrealdb", feature = "async-graphql"))]
@@ -37,12 +37,12 @@ pub struct Category {
     derive(Clone, Eq, Debug, PartialEq, PartialOrd, Ord)
 )]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
-struct Id(surrealdb::sql::Thing);
+pub struct Id(surrealdb::sql::Thing);
 
 #[cfg(all(feature = "surrealdb", feature = "async-graphql"))]
 #[cfg_attr(all(feature = "async-graphql", feature = "surrealdb"), Object)]
 impl Id {
-    async fn value(&self) -> String {
+    async fn id(&self) -> String {
         self.0.to_raw()
     }
 }
@@ -50,6 +50,9 @@ impl Id {
 #[cfg(all(feature = "surrealdb", feature = "async-graphql"))]
 impl Default for Id {
     fn default() -> Self {
-        Self(<surrealdb::sql::Thing as std::str::FromStr>::from_str("default:thing").expect("creating default thing"))
+        Self(
+            <surrealdb::sql::Thing as std::str::FromStr>::from_str("default:thing")
+                .expect("creating default thing"),
+        )
     }
 }
