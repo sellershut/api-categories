@@ -127,10 +127,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "api-database"
+version = "0.1.0"
+dependencies = [
+ "api-core",
+ "surrealdb",
+]
+
+[[package]]
 name = "api-interface"
 version = "0.1.0"
 dependencies = [
  "api-core",
+ "api-database",
  "async-graphql",
  "opentelemetry",
  "slab",

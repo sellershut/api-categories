@@ -4,7 +4,6 @@ use async_graphql::{
     connection::{query, Connection, Edge},
     Context, Enum, Error, Interface, Object, OutputType, Result,
 };
-use tracing::info;
 
 use crate::graphql::{StarWars, StarWarsChar};
 

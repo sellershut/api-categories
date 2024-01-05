@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "async-graphql", derive(InputObject, SimpleObject))]
+#[cfg_attr(feature = "async-graphql", graphql(input_name = "CategoryInput"))]
 pub struct Category {
     #[cfg(all(feature = "surrealdb", not(feature = "async-graphql")))]
     id: surrealdb::sql::Thing,

@@ -19,10 +19,13 @@ pub trait LocalMutateCategories {
     async fn create_category(&self, category: &Category) -> Result<Category, CoreError>;
     async fn update_category(
         &self,
-        id: impl AsRef<str>,
+        id: impl AsRef<str> + Send + Sync,
         data: &Category,
     ) -> Result<Category, CoreError>;
-    async fn delete_category(&self, id: impl AsRef<str>) -> Result<Category, CoreError>;
+    async fn delete_category(
+        &self,
+        id: impl AsRef<str> + Send + Sync,
+    ) -> Result<Category, CoreError>;
 }
 
 #[derive(Error, Debug)]
