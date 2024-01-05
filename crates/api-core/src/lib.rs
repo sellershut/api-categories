@@ -16,7 +16,8 @@ pub struct Category {
     #[cfg(all(feature = "surrealdb", feature = "async-graphql"))]
     #[cfg_attr(
         all(feature = "async-graphql", feature = "surrealdb"),
-        graphql(skip_input), graphql(flatten)
+        graphql(skip_input),
+        graphql(flatten)
     )]
     pub id: Id,
     #[cfg(all(not(feature = "surrealdb"), feature = "async-graphql"))]

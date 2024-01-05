@@ -4,7 +4,11 @@ mod telemetry;
 use anyhow::Result;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::GraphQL;
-use axum::{response::{Html, IntoResponse}, routing::get, Router};
+use axum::{
+    response::{Html, IntoResponse},
+    routing::get,
+    Router,
+};
 use tokio::signal;
 use tracing::info;
 
@@ -16,7 +20,7 @@ async fn main() -> Result<()> {
 
     let state = state::AppState::try_from_env()?;
 
-    let schema = api_interface::create_schema(tracer).await;
+    let schema = api_interface::create_schema(tracer, state.database_credentials()).await;
 
     let app = Router::new().route("/", get(handler).post_service(GraphQL::new(schema)));
 

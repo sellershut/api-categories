@@ -16,19 +16,21 @@ pub struct Client {
 }
 
 impl Client {
-    #[instrument]
-    pub async fn try_new(dsn: &str, username: &str, password: &str) -> Result<Self, ClientError> {
+    #[instrument(skip(username, password, namespace, database))]
+    pub async fn try_new(
+        dsn: &str,
+        username: &str,
+        password: &str,
+        namespace: &str,
+        database: &str,
+    ) -> Result<Self, ClientError> {
         trace!("connecting to database");
         let db = Surreal::new::<Ws>(dsn).await?;
 
         // Signin as a namespace, database, or root user
-        db.signin(Root {
-            username,
-            password,
-        })
-        .await?;
+        db.signin(Root { username, password }).await?;
 
-        db.use_ns("sellershut").use_db("ads").await?;
+        db.use_ns(namespace).use_db(database).await?;
 
         Ok(Client {
             client: db,
