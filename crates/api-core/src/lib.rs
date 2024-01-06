@@ -19,12 +19,18 @@ pub struct Category {
         graphql(skip_input),
         graphql(flatten)
     )]
+    #[cfg_attr(feature = "serde", serde(flatten))]
     pub id: Id,
     #[cfg(all(not(feature = "surrealdb"), feature = "async-graphql"))]
     #[cfg_attr(
-        all(feature = "async-graphql", not(feature = "surrealdb")),
+        any(
+            all(feature = "async-graphql", not(feature = "surrealdb")),
+            feature = "serde"
+        ),
         graphql(skip_input)
     )]
+    pub id: String,
+    #[cfg(all(not(feature = "surrealdb"), not(feature = "async-graphql")))]
     pub id: String,
     pub name: String,
     pub sub_categories: Vec<String>,

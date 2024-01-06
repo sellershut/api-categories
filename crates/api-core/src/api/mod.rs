@@ -9,9 +9,12 @@ pub trait LocalQueryCategories {
     async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError>;
     async fn get_sub_categories(
         &self,
-        id: impl AsRef<str>,
+        id: impl AsRef<str> + Send,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError>;
-    async fn get_category_by_id(&self, id: impl AsRef<str>) -> Result<Option<Category>, CoreError>;
+    async fn get_category_by_id(
+        &self,
+        id: impl AsRef<str> + Send,
+    ) -> Result<Option<Category>, CoreError>;
 }
 
 #[trait_variant::make(MutateCategories: Send)]
@@ -19,13 +22,10 @@ pub trait LocalMutateCategories {
     async fn create_category(&self, category: &Category) -> Result<Category, CoreError>;
     async fn update_category(
         &self,
-        id: impl AsRef<str> + Send + Sync,
+        id: impl AsRef<str> + Send,
         data: &Category,
     ) -> Result<Category, CoreError>;
-    async fn delete_category(
-        &self,
-        id: impl AsRef<str> + Send + Sync,
-    ) -> Result<Category, CoreError>;
+    async fn delete_category(&self, id: impl AsRef<str> + Send) -> Result<Category, CoreError>;
 }
 
 #[derive(Error, Debug)]
