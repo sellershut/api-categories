@@ -28,7 +28,7 @@ pub fn init_tracer() -> anyhow::Result<Tracer> {
         .with_default(LevelFilter::TRACE);
 
     let log_levels = log_levels(pkg_name);
-    println!("{log_levels}");
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()

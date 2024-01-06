@@ -1,5 +1,6 @@
 use thiserror::Error;
 
+mod collections;
 mod mutation;
 mod query;
 

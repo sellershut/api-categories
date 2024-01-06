@@ -27,16 +27,13 @@ impl MutateCategories for Client {
 
     async fn update_category(
         &self,
-        id: impl AsRef<str> + Send + Sync,
+        id: impl AsRef<str> + Send,
         data: &Category,
     ) -> Result<Category, CoreError> {
         todo!()
     }
 
-    async fn delete_category(
-        &self,
-        id: impl AsRef<str> + Send + Sync,
-    ) -> Result<Category, CoreError> {
+    async fn delete_category(&self, id: impl AsRef<str> + Send) -> Result<Category, CoreError> {
         todo!()
     }
 }
