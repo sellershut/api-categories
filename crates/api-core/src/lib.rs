@@ -27,6 +27,12 @@ pub enum Id {
     Thing(surrealdb::sql::Thing),
 }
 
+impl From<surrealdb::sql::Thing> for Id {
+    fn from(value: surrealdb::sql::Thing) -> Self {
+        Self::Thing(value)
+    }
+}
+
 #[cfg(feature = "async-graphql")]
 #[cfg_attr(feature = "async-graphql", Object)]
 impl Id {
@@ -44,3 +50,6 @@ impl Default for Id {
         Self::String(Default::default())
     }
 }
+
+#[cfg(test)]
+mod tests;

@@ -17,3 +17,13 @@ default = []
 async-graphql = ["dep:async-graphql"]
 serde = ["serde/derive"]
 surrealdb = ["dep:surrealdb"]
+
+[dev-dependencies]
+criterion.workspace = true
+fake.workspace = true
+serde_json.workspace = true
+
+[[bench]]
+name = "category-serde"
+harness = false
+path = "../../benches/category-serde.rs"
