@@ -9,6 +9,7 @@ edition = "2021"
 api-core = { workspace = true, features = ["async-graphql"] }
 api-database.workspace = true
 async-graphql = { workspace = true, features = ["tracing", "opentelemetry", "playground", "uuid"] }
+base64 = "0.21.6"
 opentelemetry.workspace = true
 slab = "0.4.9"
 thiserror.workspace = true
