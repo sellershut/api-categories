@@ -19,17 +19,25 @@ pub struct Params {
 }
 
 impl Params {
-    pub const fn new(
+    pub fn new(
         after: Option<String>,
         before: Option<String>,
         first: Option<i32>,
         last: Option<i32>,
-    ) -> Self {
-        Self {
+    ) -> async_graphql::Result<Self> {
+        if last.is_none() && first.is_none() {
+            return Err("Only one of 'first' or 'last' should be provided".into());
+        }
+
+        if after.is_some() && before.is_some() {
+            return Err("Only one or none of 'after' or 'before' should be provided".into());
+        }
+
+        Ok(Self {
             after,
             before,
             first,
             last,
-        }
+        })
     }
 }

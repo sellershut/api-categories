@@ -9,7 +9,7 @@ pub trait LocalQueryCategories {
     async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError>;
     async fn get_sub_categories(
         &self,
-        id: impl AsRef<str> + Send,
+        id: Option<impl AsRef<str> + Send>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError>;
     async fn get_category_by_id(
         &self,

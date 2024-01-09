@@ -14,9 +14,19 @@ impl QueryCategories for Client {
 
     async fn get_sub_categories(
         &self,
-        _id: impl AsRef<str> + Send,
+        id: Option<impl AsRef<str> + Send>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
-        let categories: Vec<Category> = self.client.select(Collections::Category).await?;
+        let mut resp = self
+            .client
+            .query(if let Some(parent) = id {
+                format!("SELECT sub_categories.*.* FROM {};", parent.as_ref())
+            } else {
+                format!("SELECT * FROM {} WHERE is_root=true", Collections::Category)
+            })
+            .await?;
+
+        let categories: Vec<Category> = resp.take(0)?;
+
         Ok(categories.into_iter())
     }
 

@@ -14,16 +14,21 @@ impl CategoryQuery {
     async fn categories(
         &self,
         ctx: &Context<'_>,
+        #[graphql(validator(min_length = 1, max_length = 100))]
         after: Option<String>,
+        #[graphql(validator(min_length = 1, max_length = 100))]
         before: Option<String>,
+        #[graphql(validator(minimum = 1, maximum = 100))]
         first: Option<i32>,
+        #[graphql(validator(minimum = 1, maximum = 100))]
         last: Option<i32>,
     ) -> ConnectionResult<Category> {
+        let p = Params::new(after, before, first, last)?;
+
         let database = ctx.data::<Client>().unwrap();
 
         let categories = database.get_categories().await.unwrap();
 
-        let p = Params::new(after, before, first, last);
         paginate(categories, p, 100).await
     }
 
