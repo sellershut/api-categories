@@ -1,6 +1,6 @@
 use std::str::FromStr;
 
-use api_core::Category;
+use api_core::{Category, Id};
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use fake::{faker::lorem::en::Words, Fake};
 
@@ -13,11 +13,18 @@ fn bench(c: &mut Criterion) {
         let words = words.join(" ");
 
         let id = surrealdb::sql::Thing::from_str("category:abc").unwrap();
+        let sub_categories: Vec<String> = Words(0..4).fake();
+        let sub_categories: Vec<_> = sub_categories
+            .iter()
+            .map(|word| {
+                Id::from_str(&format!("category:{word}")).unwrap()
+            })
+            .collect();
 
         let category = Category {
             id: api_core::Id::Thing(id),
             name: words,
-            sub_categories: Words(0..4).fake(),
+            sub_categories: Some(sub_categories),
             image_url: None,
             is_root: false,
         };
