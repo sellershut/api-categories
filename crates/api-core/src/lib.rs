@@ -1,4 +1,6 @@
 pub mod api;
+mod id;
+pub use id::*;
 
 #[cfg(feature = "async-graphql")]
 use async_graphql::*;
@@ -11,44 +13,17 @@ use serde::{Deserialize, Serialize};
 #[cfg_attr(feature = "async-graphql", derive(InputObject, SimpleObject))]
 #[cfg_attr(feature = "async-graphql", graphql(input_name = "CategoryInput"))]
 pub struct Category {
-    #[cfg_attr(feature = "async-graphql", graphql(skip_input), graphql(flatten))]
+    /// Category ID
+    #[cfg_attr(feature = "async-graphql", graphql(skip_input))]
     pub id: Id,
+    /// Category name
     pub name: String,
-    pub sub_categories: Vec<String>,
+    /// A list of IDs that are subcategories for the current item
+    pub sub_categories: Option<Vec<Id>>, // empty vec wont work for playground type
+    /// An image representing the current ID
     pub image_url: Option<String>,
+    /// Is the current category a sub category
     pub is_root: bool,
-}
-
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
-#[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
-pub enum Id {
-    String(String),
-    #[cfg(feature = "surrealdb")]
-    Thing(surrealdb::sql::Thing),
-}
-
-impl From<surrealdb::sql::Thing> for Id {
-    fn from(value: surrealdb::sql::Thing) -> Self {
-        Self::Thing(value)
-    }
-}
-
-#[cfg(feature = "async-graphql")]
-#[cfg_attr(feature = "async-graphql", Object)]
-impl Id {
-    async fn id(&self) -> String {
-        match self {
-            Id::String(e) => e.to_owned(),
-            #[cfg(feature = "surrealdb")]
-            Id::Thing(e) => e.id.to_raw(),
-        }
-    }
-}
-
-impl Default for Id {
-    fn default() -> Self {
-        Self::String(Default::default())
-    }
 }
 
 #[cfg(test)]
