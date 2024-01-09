@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use api_core::{
     api::{CoreError, QueryCategories},
     Category,
@@ -14,7 +16,7 @@ impl QueryCategories for Client {
 
     async fn get_sub_categories(
         &self,
-        id: Option<impl AsRef<str> + Send>,
+        id: Option<impl AsRef<str> + Send + Debug>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
         let mut resp = self
             .client
@@ -32,7 +34,7 @@ impl QueryCategories for Client {
 
     async fn get_category_by_id(
         &self,
-        id: impl AsRef<str> + Send,
+        id: impl AsRef<str> + Send + Debug,
     ) -> Result<Option<Category>, CoreError> {
         let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
 

@@ -1,7 +1,6 @@
 use api_core::{api::MutateCategories, Category};
 use api_database::Client;
 use async_graphql::{Context, Object};
-use tracing::error;
 
 #[derive(Default)]
 pub struct CategoryMutation;
@@ -17,10 +16,34 @@ impl CategoryMutation {
 
         match database.create_category(&input).await {
             Ok(category) => Ok(category),
-            Err(e) => {
-                error!("{e}");
-                todo!()
-            }
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    async fn update_category(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+        input: Category,
+    ) -> async_graphql::Result<Option<Category>> {
+        let database = ctx.data::<Client>()?;
+
+        match database.update_category(&id, &input).await {
+            Ok(category) => Ok(category),
+            Err(e) => Err(e.into()),
+        }
+    }
+
+    async fn delete_category(
+        &self,
+        ctx: &Context<'_>,
+        id: String,
+    ) -> async_graphql::Result<Option<Category>> {
+        let database = ctx.data::<Client>()?;
+
+        match database.delete_category(&id).await {
+            Ok(category) => Ok(category),
+            Err(e) => Err(e.into()),
         }
     }
 }

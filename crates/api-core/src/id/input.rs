@@ -18,7 +18,7 @@ impl InputType for Id {
         let value = value.unwrap_or_default();
         match value {
             Value::String(ref s) => {
-                if let Ok(val) = Self::from_str(&s) {
+                if let Ok(val) = Self::from_str(s) {
                     Ok(val)
                 } else {
                     Err(InputValueError::expected_type(value))

@@ -51,7 +51,7 @@ impl CategoryQuery {
     async fn category_by_id(
         &self,
         ctx: &Context<'_>,
-        id: String,
+        #[graphql(validator(min_length = 1, max_length = 100))] id: String,
     ) -> async_graphql::Result<Option<Category>> {
         let database = extract_db(ctx)?;
 

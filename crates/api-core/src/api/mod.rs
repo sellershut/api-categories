@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Debug, str::FromStr};
 
 use thiserror::Error;
 
@@ -9,11 +9,11 @@ pub trait LocalQueryCategories {
     async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError>;
     async fn get_sub_categories(
         &self,
-        id: Option<impl AsRef<str> + Send>,
+        id: Option<impl AsRef<str> + Send + Debug>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError>;
     async fn get_category_by_id(
         &self,
-        id: impl AsRef<str> + Send,
+        id: impl AsRef<str> + Send + Debug,
     ) -> Result<Option<Category>, CoreError>;
 }
 
@@ -22,10 +22,13 @@ pub trait LocalMutateCategories {
     async fn create_category(&self, category: &Category) -> Result<Category, CoreError>;
     async fn update_category(
         &self,
-        id: impl AsRef<str> + Send,
+        id: impl AsRef<str> + Send + Debug,
         data: &Category,
-    ) -> Result<Category, CoreError>;
-    async fn delete_category(&self, id: impl AsRef<str> + Send) -> Result<Category, CoreError>;
+    ) -> Result<Option<Category>, CoreError>;
+    async fn delete_category(
+        &self,
+        id: impl AsRef<str> + Send + Debug,
+    ) -> Result<Option<Category>, CoreError>;
 }
 
 #[derive(Error, Debug)]

@@ -1,10 +1,13 @@
+use std::fmt::Debug;
+
 use api_core::{
     api::{CoreError, MutateCategories},
     Category, Id,
 };
+use surrealdb::sql::Thing;
 use tracing::{debug, instrument};
 
-use crate::Client;
+use crate::{collections::Collections, Client};
 
 impl MutateCategories for Client {
     #[instrument(skip(self))]
@@ -25,16 +28,31 @@ impl MutateCategories for Client {
         }
     }
 
+    #[instrument(skip(self, id))]
     async fn update_category(
         &self,
-        id: impl AsRef<str> + Send,
+        id: impl AsRef<str> + Send + Debug,
         data: &Category,
-    ) -> Result<Category, CoreError> {
-        todo!()
+    ) -> Result<Option<Category>, CoreError> {
+        debug!("updating category");
+        let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
+
+        let item: Option<Category> = self.client.update(id).content(data).await?;
+
+        Ok(item)
     }
 
-    async fn delete_category(&self, id: impl AsRef<str> + Send) -> Result<Category, CoreError> {
-        todo!()
+    async fn delete_category(
+        &self,
+        id: impl AsRef<str> + Send + Debug,
+    ) -> Result<Option<Category>, CoreError> {
+        debug!("deleting category");
+
+        let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
+
+        let res = self.client.delete(id).await?;
+
+        Ok(res)
     }
 }
 
