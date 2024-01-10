@@ -3,7 +3,7 @@ mod telemetry;
 
 use anyhow::Result;
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
-use async_graphql_axum::GraphQL;
+use async_graphql_axum::{GraphQL, GraphQLSubscription};
 use axum::{
     response::{Html, IntoResponse},
     routing::get,
@@ -22,7 +22,9 @@ async fn main() -> Result<()> {
 
     let schema = api_interface::create_schema(tracer, state.database_credentials()).await;
 
-    let app = Router::new().route("/", get(handler).post_service(GraphQL::new(schema)));
+    let app = Router::new()
+        .route("/", get(handler).post_service(GraphQL::new(schema.clone())))
+        .route_service("/ws", GraphQLSubscription::new(schema));
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", state.port)).await?;
     info!("listening on {}", listener.local_addr()?);

@@ -1,11 +1,11 @@
 use api_database::Client;
 use async_graphql::{
     extensions::{OpenTelemetry, Tracing},
-    EmptySubscription, Schema,
+    Schema,
 };
 use opentelemetry::trace::Tracer;
 
-use self::graphql::{mutation::Mutation, query::Query};
+use self::graphql::{mutation::Mutation, query::Query, subscription::Subscription};
 
 pub mod graphql;
 
@@ -21,7 +21,7 @@ pub struct DatabaseCredentials<'a> {
 pub async fn create_schema<T>(
     tracer: T,
     database: DatabaseCredentials<'_>,
-) -> Schema<Query, Mutation, EmptySubscription>
+) -> Schema<Query, Mutation, Subscription>
 where
     T: Tracer + Send + Sync + 'static,
     <T as Tracer>::Span: Sync + Send,
@@ -35,11 +35,15 @@ where
     )
     .await
     .unwrap();
-    Schema::build(Query::default(), Mutation::default(), EmptySubscription)
-        .data(db_client)
-        .extension(Tracing)
-        .extension(OpenTelemetry::new(tracer))
-        .finish()
+    Schema::build(
+        Query::default(),
+        Mutation::default(),
+        Subscription::default(),
+    )
+    .data(db_client)
+    .extension(Tracing)
+    .extension(OpenTelemetry::new(tracer))
+    .finish()
 }
 
 #[cfg(test)]

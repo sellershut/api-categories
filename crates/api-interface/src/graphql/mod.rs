@@ -1,5 +1,6 @@
 pub(crate) mod mutation;
 pub(crate) mod query;
+pub(crate) mod subscription;
 
 use api_database::Client;
 use async_graphql::Context;
