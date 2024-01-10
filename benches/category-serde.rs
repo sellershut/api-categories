@@ -16,9 +16,7 @@ fn bench(c: &mut Criterion) {
         let sub_categories: Vec<String> = Words(0..4).fake();
         let sub_categories: Vec<_> = sub_categories
             .iter()
-            .map(|word| {
-                Id::from_str(&format!("category:{word}")).unwrap()
-            })
+            .map(|word| Id::from_str(&format!("category:{word}")).unwrap())
             .collect();
 
         let category = Category {

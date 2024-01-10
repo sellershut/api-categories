@@ -6,7 +6,7 @@ use async_graphql::{
 };
 use base64::{prelude::BASE64_URL_SAFE_NO_PAD, Engine};
 
-use super::{Params, ConnectionResult};
+use super::{ConnectionResult, Params};
 
 /// Base64 invalid states, used by `Base64Cursor`.
 pub enum Base64CursorError {

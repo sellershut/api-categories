@@ -13,7 +13,7 @@ use tracing::{instrument, trace};
 
 pub struct Client {
     client: Surreal<SurrealClient>,
-    cache_ttl: u16,
+    _cache_ttl: u16,
 }
 
 impl Client {

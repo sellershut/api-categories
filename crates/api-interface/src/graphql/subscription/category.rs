@@ -1,10 +1,10 @@
 use std::time::Duration;
 
-use api_core::{Category, api::QueryCategories};
+use api_core::{api::QueryCategories, Category};
 use async_graphql::{Context, Object, Subscription};
 use futures_util::{Stream, StreamExt};
 
-use crate::graphql::{mutation::MutationType, subscription::CategoryChanged, extract_db};
+use crate::graphql::{extract_db, mutation::MutationType, subscription::CategoryChanged};
 
 use super::broker::SimpleBroker;
 
@@ -56,4 +56,3 @@ impl CategoryChanged {
         Ok(category)
     }
 }
-
