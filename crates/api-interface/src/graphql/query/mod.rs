@@ -26,7 +26,7 @@ impl Params {
         last: Option<i32>,
     ) -> async_graphql::Result<Self> {
         if last.is_none() && first.is_none() {
-            return Err("Only one of 'first' or 'last' should be provided".into());
+            return Err("One of 'first' or 'last' should be provided".into());
         }
 
         if after.is_some() && before.is_some() {

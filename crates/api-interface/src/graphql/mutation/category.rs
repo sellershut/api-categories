@@ -2,6 +2,8 @@ use api_core::{api::MutateCategories, Category};
 use api_database::Client;
 use async_graphql::{Context, Object};
 
+use crate::graphql::subscription::{broker::SimpleBroker, CategoryChanged};
+
 #[derive(Default)]
 pub struct CategoryMutation;
 
@@ -15,7 +17,14 @@ impl CategoryMutation {
         let database = ctx.data::<Client>()?;
 
         match database.create_category(&input).await {
-            Ok(category) => Ok(category),
+            Ok(category) => {
+                SimpleBroker::publish(CategoryChanged {
+                    mutation_type: super::MutationType::Created,
+                    id: category.id.clone().into(),
+                });
+
+                Ok(category)
+            }
             Err(e) => Err(e.into()),
         }
     }
@@ -29,7 +38,13 @@ impl CategoryMutation {
         let database = ctx.data::<Client>()?;
 
         match database.update_category(&id, &input).await {
-            Ok(category) => Ok(category),
+            Ok(category) => {
+                SimpleBroker::publish(CategoryChanged {
+                    mutation_type: super::MutationType::Updated,
+                    id: id.into(),
+                });
+                Ok(category)
+            }
             Err(e) => Err(e.into()),
         }
     }
@@ -42,7 +57,13 @@ impl CategoryMutation {
         let database = ctx.data::<Client>()?;
 
         match database.delete_category(&id).await {
-            Ok(category) => Ok(category),
+            Ok(category) => {
+                SimpleBroker::publish(CategoryChanged {
+                    mutation_type: super::MutationType::Deleted,
+                    id: id.into(),
+                });
+                Ok(category)
+            }
             Err(e) => Err(e.into()),
         }
     }
