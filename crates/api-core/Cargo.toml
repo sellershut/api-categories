@@ -23,6 +23,7 @@ surrealdb = ["dep:surrealdb"]
 criterion.workspace = true
 fake.workspace = true
 serde_json.workspace = true
+tokio.workspace = true
 
 [[bench]]
 name = "category-serde"

@@ -145,6 +145,7 @@ dependencies = [
  "serde_json",
  "surrealdb",
  "thiserror",
+ "tokio",
  "trait-variant",
 ]
 

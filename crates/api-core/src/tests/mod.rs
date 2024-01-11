@@ -1,4 +1,10 @@
-use crate::Category;
+mod db;
+
+use std::str::FromStr;
+
+use crate::{Category, Id, api::LocalQueryCategories};
+
+use self::db::SampleDb;
 
 fn create_category() -> Result<Category, serde_json::Error> {
     let data = r#"
@@ -14,7 +20,7 @@ fn create_category() -> Result<Category, serde_json::Error> {
 }
 
 #[test]
-pub fn serialise() {
+fn serialise() {
     let category = create_category();
     dbg!(&category);
 
@@ -22,15 +28,21 @@ pub fn serialise() {
 }
 
 #[test]
-pub fn deserialise_list() {
+fn deserialise_list() {
     let category = create_category();
-    let category_2 = create_category();
+
+    let id = Id::from_str("category:something").expect("created id from str");
+    let category_2 = Category {
+        id,
+        name: "Something".into(),
+        sub_categories: None,
+        image_url: None,
+        is_root: true,
+    };
 
     assert!(&category.is_ok());
-    assert!(&category_2.is_ok());
 
     let category = category.unwrap();
-    let category_2 = category_2.unwrap();
 
     let categories = vec![category, category_2];
 
@@ -39,4 +51,26 @@ pub fn deserialise_list() {
     dbg!(&str_val);
 
     assert!(str_val.is_ok());
+}
+
+#[tokio::test]
+async fn query_returns() {
+    let db = SampleDb.get_categories().await;
+    assert!(db.is_ok());
+
+    let mut id = None;
+    let db = SampleDb.get_sub_categories(id).await;
+    assert!(db.is_ok());
+
+    id = Some("id");
+    let db = SampleDb.get_sub_categories(id).await;
+    assert!(db.is_ok());
+
+    let db = SampleDb.get_category_by_id("id").await;
+    assert!(db.is_ok());
+
+    let db = SampleDb.get_category_by_id("").await;
+    assert!(db.is_err());
+
+
 }
