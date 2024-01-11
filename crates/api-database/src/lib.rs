@@ -35,7 +35,7 @@ impl Client {
 
         Ok(Client {
             client: db,
-            cache_ttl: 5,
+            _cache_ttl: 5,
         })
     }
 }
