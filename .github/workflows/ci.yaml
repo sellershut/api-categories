@@ -30,10 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     name: ubuntu / stable / coverage
     steps:
-      - name: setup surreal
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
-          surreal start --log trace --auth --user $DATABASE_USERNAME --pass $DATABASE_PASSWORD memory &
+      #      - name: setup surreal
+      #  run: |
+      #    curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
+      #    surreal start --log trace --auth --user $DATABASE_USERNAME --pass $DATABASE_PASSWORD memory &
       - uses: actions/checkout@v4
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
