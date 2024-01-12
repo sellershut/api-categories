@@ -1,3 +1,4 @@
+mod async_graphql;
 mod db;
 
 use std::str::FromStr;
