@@ -96,7 +96,7 @@ async fn mutation_returns() {
 
 #[tokio::test]
 async fn mutation_returns_send() {
-    use crate::api::LocalMutateCategories;
+    use crate::api::MutateCategories;
 
     let category = create_category().unwrap();
 
