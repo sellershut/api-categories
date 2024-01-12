@@ -11,6 +11,13 @@ env:
 jobs:
   check:
     runs-on: ubuntu-latest
+    env:
+      DB_USER: ${{ secrets.TEST_DATABASE_USERNAME }}
+      DB_URL: ${{ secrets.TEST_DATABASE_URL }}
+      DB_PASS: ${{ secrets.TEST_DATABASE_PASSWORD }}
+      DB_NAME: ${{ secrets.TEST_DATABASE_NAME }}
+      DB_NS: ${{ secrets.TEST_DATABASE_NAMESPACE }}
+
     name: ubuntu / stable / check
     steps:
       - name: Get sample dataset
@@ -22,10 +29,10 @@ jobs:
       - name: install surreal
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
-          surreal start --log trace --auth --user $DATABASE_USERNAME --pass $DATABASE_PASSWORD memory &
+          surreal start --log trace --auth --user $DB_USER --pass $DB_PASS memory &
       - name: import dataset
         run: |
-          surreal import --conn http://localhost:8000 --user $TEST_DATABASE_NAME --pass $TEST_DATABASE_PASSWORD --ns $TEST_DATABASE_NAMESPACE --db $TEST_DATABASE_NAME .dataset-categories/categories.surql
+          surreal import --conn $DB_URL --user $DB_USER --pass $DB_PASS --ns $DB_NS --db $DB_NAME .dataset-categories/categories.surql
       - uses: actions/checkout@v4
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
