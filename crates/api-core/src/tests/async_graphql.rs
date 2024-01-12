@@ -1,4 +1,4 @@
-use async_graphql::{EmptyMutation, EmptySubscription, Object, Schema};
+use async_graphql::{EmptySubscription, Object, Schema};
 
 use crate::Category;
 
@@ -11,21 +11,46 @@ impl Root {
     async fn output(&self) -> Category {
         create_category().unwrap()
     }
+
+    async fn input(&self, category: Category) -> Category {
+        category
+    }
 }
 
 #[tokio::test]
 async fn gql_query() {
-    let schema = Schema::new(Root, EmptyMutation, EmptySubscription);
+    let schema = Schema::new(Root, Root, EmptySubscription);
 
     let res = schema
         .execute(
             r#"
-           query {
-             output {
-               name
-             }
-           }
-           "#,
+              query {
+                output {
+                  name
+                }
+              }
+            "#,
+        )
+        .await;
+
+    dbg!(&res);
+
+    assert!(res.errors.is_empty());
+}
+
+#[tokio::test]
+async fn gql_mutation() {
+    let schema = Schema::new(Root, Root, EmptySubscription);
+
+    let res = schema
+        .execute(
+            r#"
+              mutation {
+                input (category: {name: "Lorem", isRoot: false}) {
+                  name
+                }
+              }
+            "#,
         )
         .await;
 
