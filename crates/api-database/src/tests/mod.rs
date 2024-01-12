@@ -102,6 +102,7 @@ async fn query_all() -> Result<()> {
 #[tokio::test]
 async fn query_sub_categories() -> Result<()> {
     check_sub_categories(None, true).await?;
+    check_sub_categories(Some("justanid"), true).await?;
 
     Ok(())
 }
