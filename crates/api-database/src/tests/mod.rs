@@ -53,6 +53,8 @@ async fn create_client() -> Result<Client> {
     dotenvy::dotenv().ok();
 
     let db_host = std::env::var("TEST_DATABASE_URL").expect("TEST_DATABASE_URL");
+    let db_host = db_host.replace("http://","");
+
     let username = std::env::var("TEST_DATABASE_USERNAME").expect("TEST_DATABASE_USERNAME");
     let password = std::env::var("TEST_DATABASE_PASSWORD").expect("TEST_DATABASE_PASSWORD");
     let db_namespace = std::env::var("TEST_DATABASE_NAMESPACE").expect("TEST_DATABASE_NAMESPACE");
