@@ -36,7 +36,11 @@ impl QueryCategories for Client {
         &self,
         id: impl AsRef<str> + Send + Debug,
     ) -> Result<Option<Category>, CoreError> {
-        let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
+        let id = id.as_ref();
+        if id.is_empty() {
+            return Err(CoreError::Other("Id cannot be empty".into()));
+        }
+        let id = Thing::from((Collections::Category.to_string().as_str(), id));
 
         let category = self.client.select(id).await?;
 
