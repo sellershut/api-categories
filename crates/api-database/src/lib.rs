@@ -51,3 +51,6 @@ pub enum ClientError {
     #[error("unknown data store error")]
     Unknown,
 }
+
+#[cfg(test)]
+mod tests;

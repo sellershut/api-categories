@@ -153,11 +153,14 @@ dependencies = [
 name = "api-database"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "api-core",
+ "dotenvy",
  "serde",
  "serde_json",
  "surrealdb",
  "thiserror",
+ "tokio",
  "tracing",
 ]
 
