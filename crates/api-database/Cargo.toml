@@ -15,5 +15,12 @@ tracing.workspace = true
 
 [dev-dependencies]
 anyhow.workspace = true
+criterion = { workspace = true, features = ["async_tokio"] }
 dotenvy.workspace = true
+fake.workspace = true
 tokio = { workspace = true, features = ["macros"] }
+
+[[bench]]
+name = "database-insert"
+harness = false
+path = "../../benches/category-insert-db.rs"
