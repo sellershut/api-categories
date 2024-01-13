@@ -37,6 +37,7 @@ async fn create_category() -> Result<()> {
     assert_eq!(base_count + 1, updated_categories.count());
     check_similarities(&input, &category);
 
+    client.delete_category(&input.id.to_string()).await?;
     Ok(())
 }
 
@@ -47,9 +48,12 @@ async fn create_get_by_id() -> Result<()> {
     let client = create_client(Some("test-mutation-update")).await?;
 
     let input = client.create_category(&category).await?;
+    let id = input.id.clone();
 
     let get_by_id = client.get_category_by_id(&input.id.to_string()).await?;
     assert_eq!(get_by_id, Some(input));
+
+    client.delete_category(&id.to_string()).await?;
 
     Ok(())
 }
@@ -92,8 +96,10 @@ async fn update_category() -> Result<()> {
         .await?
         .expect("category to exist in db");
 
-    assert_eq!(update_res.id, input.id);
+    assert_eq!(&update_res.id, &input.id);
     check_similarities(&update, &update_res);
+
+    client.delete_category(&input.id.to_string()).await?;
 
     Ok(())
 }
@@ -101,7 +107,7 @@ async fn update_category() -> Result<()> {
 #[tokio::test]
 async fn delete_category() -> Result<()> {
     let category = create_category_item();
-    let client = create_client(Some("test-mutation-update")).await?;
+    let client = create_client(Some("test-mutation-delete")).await?;
 
     let all_categories = client.get_categories().await?;
 
@@ -119,5 +125,6 @@ async fn delete_category() -> Result<()> {
     let final_count = client.get_categories().await?.count();
     assert_eq!(base_count, final_count);
 
+    client.delete_category(&input.id.to_string()).await?;
     Ok(())
 }
