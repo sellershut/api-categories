@@ -1,22 +1,27 @@
+mod routes;
 mod state;
 mod telemetry;
 
 use anyhow::Result;
-use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use async_graphql_axum::{GraphQL, GraphQLSubscription};
 use axum::{
-    response::{Html, IntoResponse},
+    http::{header, HeaderValue, Method},
     routing::get,
     Router,
 };
 use tokio::signal;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
+
+use crate::routes::handler;
+
+const SUBSCRIPTION_ENDPOINT: &str = "/ws";
 
 #[tokio::main]
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
 
-    let tracer = telemetry::initialise()?;
+    let (tracer, _sentry_guard) = telemetry::initialise()?;
 
     let state = state::AppState::try_from_env()?;
 
@@ -24,7 +29,15 @@ async fn main() -> Result<()> {
 
     let app = Router::new()
         .route("/", get(handler).post_service(GraphQL::new(schema.clone())))
-        .route_service("/ws", GraphQLSubscription::new(schema));
+        .route_service(SUBSCRIPTION_ENDPOINT, GraphQLSubscription::new(schema))
+        // If you want to customize the behavior using closures here is how.
+        .layer(TraceLayer::new_for_http())
+        .layer(
+            CorsLayer::new()
+                .allow_origin(state.frontend_url.parse::<HeaderValue>()?)
+                .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION])
+                .allow_methods([Method::GET, Method::POST]),
+        );
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", state.port)).await?;
     info!("listening on {}", listener.local_addr()?);
@@ -34,12 +47,6 @@ async fn main() -> Result<()> {
         .await?;
 
     Ok(())
-}
-
-async fn handler() -> impl IntoResponse {
-    Html(playground_source(
-        GraphQLPlaygroundConfig::new("/").subscription_endpoint("/ws"),
-    ))
 }
 
 async fn shutdown_signal() {

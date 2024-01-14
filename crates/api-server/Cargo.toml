@@ -16,7 +16,9 @@ opentelemetry.workspace = true
 opentelemetry-otlp = "0.14.0"
 opentelemetry-semantic-conventions = { version = "0.13.0", default-features = false }
 opentelemetry_sdk = { version = "0.21.2", features = ["rt-tokio"] }
+sentry = { version = "0.32.1", default-features = false, features = ["reqwest", "rustls", "tower", "tracing"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
 tracing.workspace = true
 tracing-opentelemetry = "0.22.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
+tower-http = { version = "0.5.0", features = ["cors", "trace"] }

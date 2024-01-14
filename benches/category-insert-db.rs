@@ -3,7 +3,7 @@ use api_database::Client;
 use std::str::FromStr;
 
 use api_core::{api::MutateCategories, Category, Id};
-use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
+use criterion::{black_box, criterion_group, criterion_main, BenchmarkId, Criterion};
 
 use fake::{faker::lorem::en::Words, Fake};
 
@@ -53,11 +53,11 @@ fn bench(c: &mut Criterion) {
     };
 
     c.bench_with_input(BenchmarkId::new("category insert", size), &size, |b, &s| {
-        b.to_async(&rt).iter(|| black_box(client.create_category(&category)));
+        b.to_async(&rt)
+            .iter(|| black_box(client.create_category(&category)));
     });
 
     // should probably clean everything after inserting
-
 }
 
 criterion_group!(benches, bench);

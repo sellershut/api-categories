@@ -12,6 +12,7 @@ pub struct AppState {
     database_password: String,
     database_namespace: String,
     database_name: String,
+    pub frontend_url: String,
 }
 
 impl AppState {
@@ -26,6 +27,7 @@ impl AppState {
         let database_password = env::extract_variable("DATABASE_PASSWORD", "");
         let database_namespace = env::extract_variable("DATABASE_NAMESPACE", "");
         let database_name = env::extract_variable("DATABASE_NAME", "");
+        let frontend_url = env::extract_variable("FRONTEND_URL", "http://localhost:5173");
 
         Ok(AppState {
             port,
@@ -35,6 +37,7 @@ impl AppState {
             database_password,
             database_name,
             database_namespace,
+            frontend_url,
         })
     }
 

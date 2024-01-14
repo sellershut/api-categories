@@ -10,13 +10,14 @@ use opentelemetry_sdk::{
 use opentelemetry_semantic_conventions::resource::{
     DEPLOYMENT_ENVIRONMENT, SERVICE_NAME, SERVICE_VERSION,
 };
+use sentry::{ClientOptions, IntoDsn};
 use tokio::sync::oneshot::Sender;
 use tracing::{error, info, level_filters::LevelFilter};
 use tracing_subscriber::{filter::Targets, layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
 use crate::state::env::extract_variable;
 
-pub fn init_tracer() -> anyhow::Result<Tracer> {
+pub fn init_tracer() -> anyhow::Result<(Tracer, sentry::ClientInitGuard)> {
     let pkg_name = env!("CARGO_PKG_NAME");
     let pkg_ver = env!("CARGO_PKG_VERSION");
 
@@ -29,6 +30,8 @@ pub fn init_tracer() -> anyhow::Result<Tracer> {
 
     let log_levels = log_levels(pkg_name);
 
+    let sentry_guard = init_sentry()?;
+
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env()
@@ -40,6 +43,7 @@ pub fn init_tracer() -> anyhow::Result<Tracer> {
                 .with_tracer(tracer.clone())
                 .with_filter(filter),
         )
+        .with(sentry::integrations::tracing::layer())
         .init();
 
     tokio::spawn(async move {
@@ -53,7 +57,18 @@ pub fn init_tracer() -> anyhow::Result<Tracer> {
         }
     });
 
-    Ok(tracer)
+    Ok((tracer, sentry_guard))
+}
+
+fn init_sentry() -> anyhow::Result<sentry::ClientInitGuard> {
+    let dsn = extract_variable("SENTRY_DSN", "http://localhost:9000/1");
+
+    Ok(sentry::init(ClientOptions {
+        dsn: dsn.into_dsn()?,
+        traces_sample_rate: 0.2,
+        release: sentry::release_name!(),
+        ..Default::default()
+    }))
 }
 
 fn tracer(pkg_name: &str, pkg_ver: &str, tx: Sender<String>) -> anyhow::Result<Tracer> {
