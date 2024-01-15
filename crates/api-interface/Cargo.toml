@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 api-core = { workspace = true, features = ["async-graphql"] }
 api-database.workspace = true
-async-graphql = { workspace = true, features = ["tracing", "opentelemetry", "playground", "uuid"] }
+async-graphql.workspace = true
 async-stream.workspace = true
 base64 = "0.21.7"
 futures-channel.workspace = true
