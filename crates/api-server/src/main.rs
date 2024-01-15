@@ -5,7 +5,7 @@ mod telemetry;
 use std::future::ready;
 
 use anyhow::Result;
-use async_graphql::extensions::{OpenTelemetry, Tracing};
+use async_graphql::extensions::Tracing;
 use async_graphql_axum::{GraphQL, GraphQLSubscription};
 use axum::{
     http::{header, HeaderValue, Method},
@@ -28,15 +28,14 @@ const SUBSCRIPTION_ENDPOINT: &str = "/ws";
 async fn main() -> Result<()> {
     dotenvy::dotenv().ok();
 
-    let (tracer, _sentry_guard) = telemetry::initialise()?;
+    let _sentry_guard = telemetry::initialise()?;
 
     let state = state::AppState::try_from_env()?;
 
     let schema_builder = api_interface::ApiSchemaBuilder::new(state.database_credentials())
         .await
         .with_extension(Tracing)
-        .with_extension(Metrics)
-        .with_extension(OpenTelemetry::new(tracer));
+        .with_extension(Metrics);
 
     let schema = schema_builder.build();
 

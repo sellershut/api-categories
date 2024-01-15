@@ -17,7 +17,7 @@ use tracing_subscriber::{filter::Targets, layer::SubscriberExt, util::Subscriber
 
 use crate::state::env::extract_variable;
 
-pub fn init_tracer() -> anyhow::Result<(Tracer, sentry::ClientInitGuard)> {
+pub fn init_tracer() -> anyhow::Result<sentry::ClientInitGuard> {
     let pkg_name = env!("CARGO_PKG_NAME");
     let pkg_ver = env!("CARGO_PKG_VERSION");
 
@@ -40,7 +40,7 @@ pub fn init_tracer() -> anyhow::Result<(Tracer, sentry::ClientInitGuard)> {
         .with(tracing_subscriber::fmt::layer())
         .with(
             tracing_opentelemetry::layer()
-                .with_tracer(tracer.clone())
+                .with_tracer(tracer)
                 .with_filter(filter),
         )
         .with(sentry::integrations::tracing::layer())
@@ -57,7 +57,7 @@ pub fn init_tracer() -> anyhow::Result<(Tracer, sentry::ClientInitGuard)> {
         }
     });
 
-    Ok((tracer, sentry_guard))
+    Ok(sentry_guard)
 }
 
 fn init_sentry() -> anyhow::Result<sentry::ClientInitGuard> {

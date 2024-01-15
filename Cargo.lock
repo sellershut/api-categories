@@ -271,7 +271,6 @@ dependencies = [
  "multer",
  "num-traits",
  "once_cell",
- "opentelemetry",
  "pin-project-lite",
  "regex",
  "serde",

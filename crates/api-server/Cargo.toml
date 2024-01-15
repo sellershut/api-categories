@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 anyhow = "1.0.79"
 api-interface = { version = "0.1.0", path = "../api-interface" }
-async-graphql = { workspace = true, features = ["opentelemetry", "playground", "tracing"] }
+async-graphql = { workspace = true, features = ["playground", "tracing"] }
 async-graphql-axum.workspace = true
 axum = { version = "0.7.4", features = ["macros", "ws"] }
 dotenvy.workspace = true
