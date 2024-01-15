@@ -79,10 +79,9 @@ async fn gql_mutation() {
             "
     );
 
-     let id_2 = execute_mutation(&update_mutation, &schema, "updateCategory").await;
+    let id_2 = execute_mutation(&update_mutation, &schema, "updateCategory").await;
     assert_eq!(&id, &id_2);
 
-    /*
     let delete_mutation = format!(
         r"
             mutation {{
@@ -94,5 +93,5 @@ async fn gql_mutation() {
     );
 
     let id_3 = execute_mutation(&delete_mutation, &schema, "deleteCategory").await;
-    assert_eq!(&id, &id_3); */
+    assert_eq!(&id, &id_3);
 }
