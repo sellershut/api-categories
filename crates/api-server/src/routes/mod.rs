@@ -1,4 +1,4 @@
-mod middleware;
+pub mod middleware;
 
 use async_graphql::http::{playground_source, GraphQLPlaygroundConfig};
 use axum::response::{Html, IntoResponse};

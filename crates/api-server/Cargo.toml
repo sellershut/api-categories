@@ -7,18 +7,20 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.79"
-async-graphql.workspace = true
-async-graphql-axum.workspace = true
 api-interface = { version = "0.1.0", path = "../api-interface" }
+async-graphql = { workspace = true, features = ["opentelemetry", "playground", "tracing"] }
+async-graphql-axum.workspace = true
 axum = { version = "0.7.4", features = ["macros", "ws"] }
 dotenvy.workspace = true
+metrics = { version = "0.22.0", default-features = false }
+metrics-exporter-prometheus = { version = "0.13.0", default-features = false }
 opentelemetry.workspace = true
 opentelemetry-otlp = "0.14.0"
 opentelemetry-semantic-conventions = { version = "0.13.0", default-features = false }
 opentelemetry_sdk = { version = "0.21.2", features = ["rt-tokio"] }
-sentry = { version = "0.32.1", default-features = false, features = ["reqwest", "rustls", "tower", "tracing"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "signal"] }
+tower-http = { version = "0.5.0", features = ["cors", "trace"] }
 tracing.workspace = true
 tracing-opentelemetry = "0.22.0"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
-tower-http = { version = "0.5.0", features = ["cors", "trace"] }
+sentry = { version = "0.32.1", default-features = false, features = ["reqwest", "rustls", "tower", "tracing"] }

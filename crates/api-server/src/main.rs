@@ -2,10 +2,14 @@ mod routes;
 mod state;
 mod telemetry;
 
+use std::future::ready;
+
 use anyhow::Result;
+use async_graphql::extensions::{OpenTelemetry, Tracing};
 use async_graphql_axum::{GraphQL, GraphQLSubscription};
 use axum::{
     http::{header, HeaderValue, Method},
+    middleware,
     routing::get,
     Router,
 };
@@ -13,7 +17,10 @@ use tokio::signal;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::info;
 
-use crate::routes::handler;
+use crate::routes::{
+    handler,
+    middleware::{graphql::Metrics, track_metrics},
+};
 
 const SUBSCRIPTION_ENDPOINT: &str = "/ws";
 
@@ -25,11 +32,22 @@ async fn main() -> Result<()> {
 
     let state = state::AppState::try_from_env()?;
 
-    let schema = api_interface::create_schema(tracer, state.database_credentials()).await;
+    let schema_builder = api_interface::ApiSchemaBuilder::new(state.database_credentials())
+        .await
+        .with_extension(Tracing)
+        .with_extension(Metrics)
+        .with_extension(OpenTelemetry::new(tracer));
+
+    let schema = schema_builder.build();
 
     let app = Router::new()
         .route("/", get(handler).post_service(GraphQL::new(schema.clone())))
+        .route(
+            "/metrics",
+            get(move || ready(state.metrics_handle.render())),
+        )
         .route_service(SUBSCRIPTION_ENDPOINT, GraphQLSubscription::new(schema))
+        .route_layer(middleware::from_fn(track_metrics))
         // If you want to customize the behavior using closures here is how.
         .layer(TraceLayer::new_for_http())
         .layer(

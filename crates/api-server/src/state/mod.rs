@@ -2,7 +2,10 @@ pub mod env;
 
 use anyhow::{Ok, Result};
 use api_interface::DatabaseCredentials;
+use metrics_exporter_prometheus::PrometheusHandle;
 use tracing::instrument;
+
+use crate::telemetry::metrics::setup_metrics_recorder;
 
 pub struct AppState {
     pub port: u16,
@@ -13,6 +16,7 @@ pub struct AppState {
     database_namespace: String,
     database_name: String,
     pub frontend_url: String,
+    pub metrics_handle: PrometheusHandle,
 }
 
 impl AppState {
@@ -29,6 +33,8 @@ impl AppState {
         let database_name = env::extract_variable("DATABASE_NAME", "");
         let frontend_url = env::extract_variable("FRONTEND_URL", "http://localhost:5173");
 
+        let metrics_handle = setup_metrics_recorder()?;
+
         Ok(AppState {
             port,
             otel_collector_endpoint,
@@ -38,6 +44,7 @@ impl AppState {
             database_name,
             database_namespace,
             frontend_url,
+            metrics_handle,
         })
     }
 
