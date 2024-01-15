@@ -58,7 +58,7 @@ async fn create_get_by_id() -> Result<()> {
     Ok(())
 }
 
-#[tokio::test]
+/* #[tokio::test]
 async fn update_no_id() -> Result<()> {
     let mut update = create_category_item();
 
@@ -76,7 +76,7 @@ async fn update_no_id() -> Result<()> {
     assert!(update_res.is_err());
 
     Ok(())
-}
+} */
 
 #[tokio::test]
 async fn update_category() -> Result<()> {

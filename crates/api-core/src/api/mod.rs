@@ -34,7 +34,7 @@ pub trait LocalMutateCategories {
 #[derive(Error, Debug)]
 pub enum CoreError {
     #[cfg(feature = "surrealdb")]
-    #[error("data store disconnected")]
+    #[error(transparent)]
     Database(#[from] surrealdb::Error),
     #[error("`{0}`")]
     Other(String),

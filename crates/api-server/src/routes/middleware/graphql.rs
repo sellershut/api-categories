@@ -1,12 +1,6 @@
 use std::sync::Arc;
 
-use async_graphql::{
-    extensions::{
-        Extension, ExtensionContext, ExtensionFactory, NextParseQuery, NextResolve, ResolveInfo, NextPrepareRequest,
-    },
-    parser::types::ExecutableDocument,
-    Request, ServerResult, Value, Variables,
-};
+use async_graphql::{extensions::{Extension, ExtensionContext, ExtensionFactory, NextPrepareRequest}, Request, ServerResult};
 use axum::async_trait;
 
 pub struct Metrics;

@@ -10,6 +10,7 @@ api-core = { workspace = true, features = ["async-graphql"] }
 api-database.workspace = true
 async-graphql.workspace = true
 async-stream.workspace = true
+async-trait.workspace = true
 base64 = "0.21.7"
 futures-channel.workspace = true
 futures-timer.workspace = true
@@ -19,3 +20,8 @@ opentelemetry.workspace = true
 slab = "0.4.9"
 thiserror.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+dotenvy.workspace = true
+fake.workspace = true
+tokio = { workspace = true, features = ["macros"] }

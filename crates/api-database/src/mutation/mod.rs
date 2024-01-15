@@ -34,10 +34,13 @@ impl MutateCategories for Client {
         id: impl AsRef<str> + Send + Debug,
         data: &Category,
     ) -> Result<Option<Category>, CoreError> {
+        let id = id.as_ref();
         debug!("updating category");
-        let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
+        let id = Thing::from((Collections::Category.to_string().as_str(), id));
 
-        let item: Option<Category> = self.client.update(id).content(data).await?;
+        let input_category = InputCategory::from(data);
+
+        let item: Option<Category> = self.client.update(id).content(input_category).await?;
 
         Ok(item)
     }

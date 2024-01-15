@@ -178,7 +178,10 @@ dependencies = [
  "api-database",
  "async-graphql",
  "async-stream",
+ "async-trait",
  "base64 0.21.7",
+ "dotenvy",
+ "fake",
  "futures-channel",
  "futures-timer",
  "futures-util",
@@ -186,6 +189,7 @@ dependencies = [
  "opentelemetry",
  "slab",
  "thiserror",
+ "tokio",
  "tracing",
 ]
 
