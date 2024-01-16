@@ -5,15 +5,18 @@ use api_core::{
     Category,
 };
 use surrealdb::sql::Thing;
+use tracing::instrument;
 
 use crate::{collections::Collections, Client};
 
 impl QueryCategories for Client {
+    #[instrument(skip(self), err(Debug))]
     async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
         let categories: Vec<Category> = self.client.select(Collections::Category).await?;
         Ok(categories.into_iter())
     }
 
+    #[instrument(skip(self), err(Debug))]
     async fn get_sub_categories(
         &self,
         id: Option<impl AsRef<str> + Send + Debug>,
@@ -32,6 +35,7 @@ impl QueryCategories for Client {
         Ok(categories.into_iter())
     }
 
+    #[instrument(skip(self), err(Debug))]
     async fn get_category_by_id(
         &self,
         id: impl AsRef<str> + Send + Debug,

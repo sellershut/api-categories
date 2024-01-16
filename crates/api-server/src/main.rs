@@ -51,7 +51,7 @@ async fn main() -> Result<()> {
 
 async fn create_router(state: state::AppState) -> Result<Router> {
     let schema_builder = api_interface::ApiSchemaBuilder::new(state.database_credentials())
-        .await
+        .await?
         .with_extension(Tracing)
         .with_extension(Metrics);
 

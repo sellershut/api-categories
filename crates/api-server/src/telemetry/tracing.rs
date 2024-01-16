@@ -12,7 +12,7 @@ use opentelemetry_semantic_conventions::resource::{
 };
 use sentry::{ClientOptions, IntoDsn};
 use tokio::sync::oneshot::Sender;
-use tracing::{error, info, level_filters::LevelFilter};
+use tracing::{error, level_filters::LevelFilter, trace};
 use tracing_subscriber::{filter::Targets, layer::SubscriberExt, util::SubscriberInitExt, Layer};
 
 use crate::state::env::extract_variable;
@@ -49,7 +49,7 @@ pub fn init_tracer() -> anyhow::Result<sentry::ClientInitGuard> {
     tokio::spawn(async move {
         match rx.await {
             Ok(e) => {
-                info!(collector = e, "opentelemetry enabled");
+                trace!(collector = e, "opentelemetry enabled");
             }
             Err(e) => {
                 error!("{e}");
@@ -98,7 +98,7 @@ fn log_levels(pkg_name: &str) -> String {
     let mut log_levels = HashMap::new();
     log_levels.insert(pkg_name, "trace");
     log_levels.insert("api_interface", "trace");
-    log_levels.insert("api_interface", "trace");
+    log_levels.insert("reqwest", "info");
     log_levels.insert("api_database", "trace");
     log_levels.insert("tower", "warn");
     log_levels.insert("h2", "warn");

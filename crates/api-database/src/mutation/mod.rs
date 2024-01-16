@@ -5,15 +5,13 @@ use api_core::{
     Category, Id,
 };
 use surrealdb::sql::Thing;
-use tracing::{debug, instrument};
+use tracing::instrument;
 
 use crate::{collections::Collections, Client};
 
 impl MutateCategories for Client {
-    #[instrument(skip(self))]
+    #[instrument(skip(self), err(Debug))]
     async fn create_category(&self, category: &Category) -> Result<Category, CoreError> {
-        debug!("creating category");
-
         let input_category = InputCategory::from(category);
 
         let item: Vec<Category> = self
@@ -28,14 +26,13 @@ impl MutateCategories for Client {
         }
     }
 
-    #[instrument(skip(self, id))]
+    #[instrument(skip(self, id), err(Debug))]
     async fn update_category(
         &self,
         id: impl AsRef<str> + Send + Debug,
         data: &Category,
     ) -> Result<Option<Category>, CoreError> {
         let id = id.as_ref();
-        debug!("updating category");
         let id = Thing::from((Collections::Category.to_string().as_str(), id));
 
         let input_category = InputCategory::from(data);
@@ -45,12 +42,11 @@ impl MutateCategories for Client {
         Ok(item)
     }
 
+    #[instrument(skip(self, id), err(Debug))]
     async fn delete_category(
         &self,
         id: impl AsRef<str> + Send + Debug,
     ) -> Result<Option<Category>, CoreError> {
-        debug!("deleting category");
-
         let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
 
         let res = self.client.delete(id).await?;

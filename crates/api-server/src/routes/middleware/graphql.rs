@@ -24,7 +24,7 @@ impl Extension for MetricsExtension {
         request: Request,
         next: NextPrepareRequest<'_>,
     ) -> ServerResult<Request> {
-        println!("operation:query {:?}", request.query);
+        //println!("operation:query {:?}", request.query);
         next.run(ctx, request).await
     }
 }

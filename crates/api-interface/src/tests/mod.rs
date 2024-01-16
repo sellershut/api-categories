@@ -57,6 +57,7 @@ async fn init_schema() -> async_graphql::Schema<
 
     ApiSchemaBuilder::new(database_credentials)
         .await
+        .expect("schema created successfully")
         .with_extension(DummyExtension)
         .build()
 }

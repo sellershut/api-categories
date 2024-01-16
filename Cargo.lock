@@ -175,12 +175,14 @@ dependencies = [
 name = "api-interface"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
  "api-core",
  "api-database",
  "async-graphql",
  "async-stream",
  "async-trait",
  "base64 0.21.7",
+ "criterion",
  "dotenvy",
  "fake",
  "futures-channel",

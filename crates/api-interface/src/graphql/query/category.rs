@@ -1,5 +1,6 @@
 use api_core::{api::QueryCategories, Category};
 use async_graphql::{Context, Object};
+use tracing::instrument;
 
 use crate::graphql::{extract_db, query::Params};
 
@@ -10,6 +11,7 @@ pub struct CategoryQuery;
 
 #[Object]
 impl CategoryQuery {
+    #[instrument(skip(ctx), err(Debug))]
     async fn categories(
         &self,
         ctx: &Context<'_>,
@@ -27,6 +29,7 @@ impl CategoryQuery {
         paginate(categories, p, 100).await
     }
 
+    #[instrument(skip(ctx), err(Debug))]
     async fn sub_categories(
         &self,
         ctx: &Context<'_>,
@@ -48,6 +51,7 @@ impl CategoryQuery {
         paginate(categories, p, 100).await
     }
 
+    #[instrument(skip(ctx), err(Debug))]
     async fn category_by_id(
         &self,
         ctx: &Context<'_>,
