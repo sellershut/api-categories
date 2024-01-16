@@ -26,3 +26,8 @@ thiserror = "1.0.56"
 tokio = "1.35.1"
 tracing = "0.1.40"
 trait-variant = "0.1.1"
+
+[profile.release]
+lto = true
+strip = true
+codegen-units = 1
