@@ -10,4 +10,3 @@ pub async fn handler() -> impl IntoResponse {
         GraphQLPlaygroundConfig::new("/").subscription_endpoint(SUBSCRIPTION_ENDPOINT),
     ))
 }
-

@@ -2,7 +2,11 @@ pub mod graphql;
 
 use std::time::Instant;
 
-use axum::{extract::{MatchedPath, Request}, response::IntoResponse, middleware::Next};
+use axum::{
+    extract::{MatchedPath, Request},
+    middleware::Next,
+    response::IntoResponse,
+};
 
 pub async fn track_metrics(req: Request, next: Next) -> impl IntoResponse {
     let start = Instant::now();

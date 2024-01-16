@@ -26,11 +26,31 @@ impl AppState {
         let otel_collector_endpoint =
             env::extract_variable("OPENTELEMETRY_COLLECTOR_HOST", "http://localhost:4318");
 
-        let database_dsn = env::extract_variable("DATABASE_DSN", "localhost:8000");
-        let database_username = env::extract_variable("DATABASE_USERNAME", "");
-        let database_password = env::extract_variable("DATABASE_PASSWORD", "");
-        let database_namespace = env::extract_variable("DATABASE_NAMESPACE", "");
-        let database_name = env::extract_variable("DATABASE_NAME", "");
+        let (dsn, db_name, db_user, db_pass, db_ns) = {
+            if cfg!(test) {
+                (
+                    "TEST_DATABASE_URL",
+                    "TEST_DATABASE_NAME",
+                    "TEST_DATABASE_USERNAME",
+                    "TEST_DATABASE_PASSWORD",
+                    "TEST_DATABASE_NAMESPACE",
+                )
+            } else {
+                (
+                    "DATABASE_DSN",
+                    "DATABASE_NAME",
+                    "DATABASE_USERNAME",
+                    "DATABASE_PASSWORD",
+                    "DATABASE_NAMESPACE",
+                )
+            }
+        };
+
+        let database_dsn = env::extract_variable(dsn, "localhost:8000");
+        let database_username = env::extract_variable(db_user, "");
+        let database_password = env::extract_variable(db_pass, "");
+        let database_namespace = env::extract_variable(db_ns, "");
+        let database_name = env::extract_variable(db_name, "");
         let frontend_url = env::extract_variable("FRONTEND_URL", "http://localhost:5173");
 
         let metrics_handle = setup_metrics_recorder()?;

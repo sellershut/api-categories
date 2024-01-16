@@ -2,6 +2,9 @@ mod routes;
 mod state;
 mod telemetry;
 
+#[cfg(test)]
+mod tests;
+
 use std::future::ready;
 
 use anyhow::Result;
@@ -32,6 +35,21 @@ async fn main() -> Result<()> {
 
     let state = state::AppState::try_from_env()?;
 
+    let port = state.port;
+
+    let router = create_router(state).await?;
+
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{port}")).await?;
+    info!("listening on {}", listener.local_addr()?);
+
+    axum::serve(listener, router)
+        .with_graceful_shutdown(shutdown_signal())
+        .await?;
+
+    Ok(())
+}
+
+async fn create_router(state: state::AppState) -> Result<Router> {
     let schema_builder = api_interface::ApiSchemaBuilder::new(state.database_credentials())
         .await
         .with_extension(Tracing)
@@ -39,7 +57,7 @@ async fn main() -> Result<()> {
 
     let schema = schema_builder.build();
 
-    let app = Router::new()
+    let router = Router::new()
         .route("/", get(handler).post_service(GraphQL::new(schema.clone())))
         .route(
             "/metrics",
@@ -56,14 +74,7 @@ async fn main() -> Result<()> {
                 .allow_methods([Method::GET, Method::POST]),
         );
 
-    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", state.port)).await?;
-    info!("listening on {}", listener.local_addr()?);
-
-    axum::serve(listener, app)
-        .with_graceful_shutdown(shutdown_signal())
-        .await?;
-
-    Ok(())
+    Ok(router)
 }
 
 async fn shutdown_signal() {
