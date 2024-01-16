@@ -47,6 +47,10 @@ impl AppState {
         };
 
         let database_dsn = env::extract_variable(dsn, "localhost:8000");
+
+        #[cfg(test)]
+        let database_dsn = database_dsn.replace("http://", "");
+
         let database_username = env::extract_variable(db_user, "");
         let database_password = env::extract_variable(db_pass, "");
         let database_namespace = env::extract_variable(db_ns, "");

@@ -7,7 +7,7 @@ use axum::{
 use tower::ServiceExt;
 
 #[tokio::test]
-async fn hello() -> Result<()> {
+async fn http_check() -> Result<()> {
     dotenvy::dotenv().ok();
 
     let state = AppState::try_from_env()?;
