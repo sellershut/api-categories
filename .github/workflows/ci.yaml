@@ -42,27 +42,18 @@ jobs:
   coverage:
     runs-on: ubuntu-latest
     env:
-      TEST_DATABASE_USERNAME: ${{ secrets.TEST_DATABASE_USERNAME }}
-      TEST_DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
-      TEST_DATABASE_PASSWORD: ${{ secrets.TEST_DATABASE_PASSWORD }}
-      TEST_DATABASE_NAME: ${{ secrets.TEST_DATABASE_NAME }}
-      TEST_DATABASE_NAMESPACE: ${{ secrets.TEST_DATABASE_NAMESPACE }}
+      TEST_DATABASE_USERNAME: root
+      TEST_DATABASE_URL: localhost:8000
+      TEST_DATABASE_PASSWORD: root
+      TEST_DATABASE_NAME: root
+      TEST_DATABASE_NAMESPACE: ci-tests
 
     name: ubuntu / stable / coverage
     steps:
-      - name: Get sample dataset
-        uses: actions/checkout@v4
-        with:
-          repository: sellershut/db-categories
-          token: ${{ secrets.PAT_CATEGORIES_DATASET }}
-          path: .dataset-categories
       - name: install surreal
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
           surreal start --log trace --auth --user $TEST_DATABASE_USERNAME --pass $TEST_DATABASE_PASSWORD memory &
-      - name: import dataset
-        run: |
-          surreal import --conn $TEST_DATABASE_URL --user $TEST_DATABASE_USERNAME --pass $TEST_DATABASE_PASSWORD --ns $TEST_DATABASE_NAMESPACE --db $TEST_DATABASE_NAME .dataset-categories/categories.surql
       - uses: actions/checkout@v4
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
@@ -76,5 +67,3 @@ jobs:
         uses: codecov/codecov-action@v3
         with:
           fail_ci_if_error: true
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
