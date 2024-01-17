@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use api_core::{api::QueryCategories, Category};
 use async_graphql::{Context, Object, Subscription};
 use futures_util::{Stream, StreamExt};
