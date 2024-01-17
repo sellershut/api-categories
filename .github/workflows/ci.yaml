@@ -4,6 +4,11 @@ on:
   pull_request:
 name: rust
 
+# cancel on going checks when new code is code
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
 env:
   CARGO_INCREMENTAL: 0
   CARGO_TERM_COLOR: always
@@ -22,48 +27,47 @@ jobs:
       - name: cargo check
         run: cargo check
 
-  os-check:
-    runs-on: ${{ matrix.os }}
-    name: ${{ matrix.os }} / stable
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [macos-latest, windows-latest]
-    steps:
-      - uses: actions/checkout@v4
-      - name: Install stable
-        uses: dtolnay/rust-toolchain@stable
-      - name: cargo generate-lockfile
-        if: hashFiles('Cargo.lock') == ''
-        run: cargo generate-lockfile
-      - name: cargo test --workspace
-        run: cargo test --no-run --workspace --locked --all-features --all-targets
-
-  coverage:
+  hack:
     runs-on: ubuntu-latest
-    env:
-      TEST_DATABASE_USERNAME: root
-      TEST_DATABASE_URL: localhost:8000
-      TEST_DATABASE_PASSWORD: root
-      TEST_DATABASE_NAME: root
-      TEST_DATABASE_NAMESPACE: ci-tests
-
-    name: ubuntu / stable / coverage
+    name: ubuntu / stable / features
     steps:
-      - name: install surreal
-        run: |
-          curl --proto '=https' --tlsv1.2 -sSf https://install.surrealdb.com | sh
-          surreal start --log trace --auth --user $TEST_DATABASE_USERNAME --pass $TEST_DATABASE_PASSWORD memory &
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - name: Install stable
         uses: dtolnay/rust-toolchain@stable
+      - name: cargo install cargo-hack
+        uses: taiki-e/install-action@cargo-hack
+      - name: cargo hack
+        run: cargo hack --feature-powerset check --all
+
+  doc:
+    runs-on: ubuntu-latest
+    name: nightly / doc
+    steps:
+      - uses: actions/checkout@v4
         with:
-          components: llvm-tools-preview
-      - name: cargo install cargo-llvm-cov
-        uses: taiki-e/install-action@cargo-llvm-cov
-      - name: cargo llvm-cov
-        run: cargo llvm-cov --workspace --locked --all-features --lcov --output-path lcov.info
-      - name: Upload to codecov.io
-        uses: codecov/codecov-action@v3
+          submodules: true
+      - name: Install nightly
+        uses: dtolnay/rust-toolchain@nightly
+      - name: cargo doc
+        run: cargo doc --no-deps --all-features
+        env:
+          RUSTDOCFLAGS: --cfg docsrs
+
+  msrv:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        msrv: ["1.75.0"] # trait-variant
+    name: ubuntu / ${{ matrix.msrv }}
+    steps:
+      - uses: actions/checkout@v4
         with:
-          fail_ci_if_error: true
+          submodules: true
+      - name: Install ${{ matrix.msrv }}
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: ${{ matrix.msrv }}
+      - name: cargo +${{ matrix.msrv }} check
+        run: cargo check --all-features
