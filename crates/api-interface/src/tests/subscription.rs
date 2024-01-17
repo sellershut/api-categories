@@ -18,4 +18,3 @@ async fn gql_subscription() -> Result<(), Box<dyn std::error::Error>> {
 
     Ok(())
 }
-
