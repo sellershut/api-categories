@@ -13,17 +13,6 @@ pub struct CategorySubscription;
 
 #[Subscription]
 impl CategorySubscription {
-    async fn interval(&self, #[graphql(default = 1)] n: i32) -> impl Stream<Item = i32> {
-        let mut value = 0;
-        async_stream::stream! {
-            loop {
-                futures_timer::Delay::new(Duration::from_secs(1)).await;
-                value += n;
-                yield value;
-            }
-        }
-    }
-
     async fn categories(
         &self,
         mutation_type: Option<MutationType>,
