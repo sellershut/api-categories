@@ -1,5 +1,6 @@
 mod mutation;
 mod query;
+mod redis;
 
 use crate::Client;
 use anyhow::Result;
