@@ -17,10 +17,20 @@ env:
   TEST_DATABASE_PASSWORD: root
   TEST_DATABASE_NAME: root
   TEST_DATABASE_NAMESPACE: ci-tests
+  TEST_REDIS_HOST: redis://localhost:6379
 
 jobs:
   required:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:alpine
+        # Set health checks to wait until redis has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     name: ubuntu / ${{ matrix.toolchain }}
     strategy:
       matrix:

@@ -3,6 +3,7 @@ use thiserror::Error;
 mod collections;
 mod mutation;
 mod query;
+mod redis;
 
 use surrealdb::{
     engine::remote::ws::{Client as SurrealClient, Ws},
@@ -11,8 +12,11 @@ use surrealdb::{
 };
 use tracing::{instrument, trace};
 
+use self::redis::RedisPool;
+
 pub struct Client {
     client: Surreal<SurrealClient>,
+    _redis: Option<RedisPool>,
     _cache_ttl: u16,
 }
 
@@ -36,6 +40,7 @@ impl Client {
         Ok(Client {
             client: db,
             _cache_ttl: 5,
+            _redis: None,
         })
     }
 }
