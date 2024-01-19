@@ -1,9 +1,9 @@
 pub mod env;
 
 use anyhow::{Ok, Result};
-use api_interface::DatabaseCredentials;
+use api_interface::{DatabaseCredentials, RedisConfig};
 use metrics_exporter_prometheus::PrometheusHandle;
-use tracing::instrument;
+use tracing::{error, instrument, warn};
 
 use crate::telemetry::metrics::setup_metrics_recorder;
 
@@ -17,6 +17,9 @@ pub struct AppState {
     database_name: String,
     pub frontend_url: String,
     pub metrics_handle: PrometheusHandle,
+    redis_dsn: String,
+    redis_clustered: bool,
+    db_pool_size: u16,
 }
 
 impl AppState {
@@ -26,7 +29,7 @@ impl AppState {
         let otel_collector_endpoint =
             env::extract_variable("OPENTELEMETRY_COLLECTOR_HOST", "http://localhost:4318");
 
-        let (dsn, db_name, db_user, db_pass, db_ns) = {
+        let (dsn, db_name, db_user, db_pass, db_ns, redis_host, redis_is_cluster) = {
             if cfg!(test) {
                 (
                     "TEST_DATABASE_URL",
@@ -34,6 +37,8 @@ impl AppState {
                     "TEST_DATABASE_USERNAME",
                     "TEST_DATABASE_PASSWORD",
                     "TEST_DATABASE_NAMESPACE",
+                    "TEST_REDIS_HOST",
+                    "TEST_REDIS_CLUSTER",
                 )
             } else {
                 (
@@ -42,6 +47,8 @@ impl AppState {
                     "DATABASE_USERNAME",
                     "DATABASE_PASSWORD",
                     "DATABASE_NAMESPACE",
+                    "REDIS_HOST",
+                    "REDIS_CLUSTER",
                 )
             }
         };
@@ -56,6 +63,9 @@ impl AppState {
         let database_namespace = env::extract_variable(db_ns, "");
         let database_name = env::extract_variable(db_name, "");
         let frontend_url = env::extract_variable("FRONTEND_URL", "http://localhost:5173");
+        let redis_dsn = env::extract_variable(redis_host, "redis://localhost:6379");
+        let redis_clustered = env::extract_variable(redis_is_cluster, "false");
+        let pool_size = env::extract_variable("DB_POOL_SIZE", "10");
 
         let metrics_handle = setup_metrics_recorder()?;
 
@@ -69,6 +79,19 @@ impl AppState {
             database_namespace,
             frontend_url,
             metrics_handle,
+            redis_dsn,
+            redis_clustered: redis_clustered.parse().unwrap_or_else(|_| {
+                warn!("REDIS_CLUSTER is not a boolean value");
+                false
+            }),
+            db_pool_size: pool_size.parse().unwrap_or_else(|_| {
+                error!(
+                    val = pool_size,
+                    default = 10,
+                    "connection pool size invalid"
+                );
+                10
+            }),
         })
     }
 
@@ -79,6 +102,14 @@ impl AppState {
             db_pass: &self.database_password,
             db_ns: &self.database_namespace,
             db: &self.database_name,
+        }
+    }
+
+    pub fn redis_credentials(&self) -> RedisConfig {
+        RedisConfig {
+            redis_dsn: &self.redis_dsn,
+            clustered: self.redis_clustered,
+            pool_size: self.db_pool_size,
         }
     }
 }

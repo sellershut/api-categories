@@ -50,10 +50,13 @@ async fn main() -> Result<()> {
 }
 
 async fn create_router(state: state::AppState) -> Result<Router> {
-    let schema_builder = api_interface::ApiSchemaBuilder::new(state.database_credentials())
-        .await?
-        .with_extension(Tracing)
-        .with_extension(Metrics);
+    let schema_builder = api_interface::ApiSchemaBuilder::new(
+        state.database_credentials(),
+        Some(state.redis_credentials()),
+    )
+    .await?
+    .with_extension(Tracing)
+    .with_extension(Metrics);
 
     let schema = schema_builder.build();
 
