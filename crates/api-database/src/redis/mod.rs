@@ -1,6 +1,7 @@
 // https://github.com/svix/svix-webhooks/blob/main/server/svix-server/src/redis/mod.rs
-#![allow(dead_code)]
 mod cluster;
+
+pub(crate) mod cache_keys;
 
 use bb8::{Pool, RunError};
 use bb8_redis::RedisMultiplexedConnectionManager;

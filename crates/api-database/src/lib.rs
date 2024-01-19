@@ -16,7 +16,7 @@ use self::redis::RedisPool;
 
 pub struct Client {
     client: Surreal<SurrealClient>,
-    _redis: Option<RedisPool>,
+    redis: Option<RedisPool>,
     _cache_ttl: u16,
 }
 
@@ -28,6 +28,7 @@ impl Client {
         password: &str,
         namespace: &str,
         database: &str,
+        redis: Option<(&str, bool, u16)>,
     ) -> Result<Self, ClientError> {
         trace!("connecting to database");
         let db = Surreal::new::<Ws>(dsn).await?;
@@ -40,7 +41,14 @@ impl Client {
         Ok(Client {
             client: db,
             _cache_ttl: 5,
-            _redis: None,
+            redis: match redis {
+                Some((dsn, clustered, size)) => Some(if clustered {
+                    redis::new_redis_pool_clustered(dsn, size).await
+                } else {
+                    redis::new_redis_pool(dsn, size).await
+                }),
+                None => None,
+            },
         })
     }
 }

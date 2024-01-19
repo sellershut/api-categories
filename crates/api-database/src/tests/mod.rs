@@ -22,6 +22,7 @@ async fn create_client(with_ns: Option<&str>) -> Result<Client> {
         &password,
         with_ns.unwrap_or(&db_namespace),
         &db_name,
+        None,
     )
     .await?;
 

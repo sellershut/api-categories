@@ -16,6 +16,13 @@ pub struct DatabaseCredentials<'a> {
     pub db: &'a str,
 }
 
+#[derive(Debug, Clone, Copy)]
+pub struct RedisConfig<'a> {
+    pub redis_dsn: &'a str,
+    pub clustered: bool,
+    pub pool_size: u16,
+}
+
 pub struct ApiSchemaBuilder {
     builder: SchemaBuilder<Query, Mutation, Subscription>,
 }
@@ -28,7 +35,10 @@ pub enum SchemaError {
 
 impl ApiSchemaBuilder {
     #[instrument(skip_all, fields(db.url = %database.db_dsn), name = "schema.init")]
-    pub async fn new(database: DatabaseCredentials<'_>) -> Result<Self, SchemaError> {
+    pub async fn new(
+        database: DatabaseCredentials<'_>,
+        redis: Option<RedisConfig<'_>>,
+    ) -> Result<Self, SchemaError> {
         trace!("creating database client");
         let db_client = Client::try_new(
             database.db_dsn,
@@ -36,6 +46,7 @@ impl ApiSchemaBuilder {
             database.db_pass,
             database.db_ns,
             database.db,
+            redis.map(|f| (f.redis_dsn, f.clustered, f.pool_size)),
         )
         .await?;
 
