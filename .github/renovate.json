@@ -11,6 +11,12 @@
         "opentelemetry"
       ],
       "groupName": "opentelemetry"
+    },
+    {
+      "matchPackagePatterns": [
+        "async-graphql"
+      ],
+      "groupName": "async-graphql"
     }
   ]
 }
