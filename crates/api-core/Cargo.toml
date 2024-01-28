@@ -20,6 +20,7 @@ serde = ["serde/derive"]
 surrealdb = ["dep:surrealdb"]
 
 [dev-dependencies]
+bincode = "1.3.3"
 criterion.workspace = true
 fake.workspace = true
 serde_json.workspace = true
