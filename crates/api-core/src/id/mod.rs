@@ -10,11 +10,34 @@ use std::fmt::Display;
 use serde::{Deserialize, Serialize};
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize), serde(untagged))]
+#[cfg_attr(
+    all(feature = "serde", feature = "surrealdb"),
+    serde(from = "surrealdb::sql::Thing")
+)]
+#[cfg_attr(
+    all(feature = "serde", not(feature = "surrealdb")),
+    serde(from = "String")
+)]
 #[derive(Debug, Clone, PartialEq, PartialOrd, Ord, Eq)]
 pub enum Id {
+    #[cfg(not(feature = "surrealdb"))]
     String(String),
     #[cfg(feature = "surrealdb")]
     Thing(surrealdb::sql::Thing),
+}
+
+#[cfg(feature = "surrealdb")]
+impl From<surrealdb::sql::Thing> for Id {
+    fn from(value: surrealdb::sql::Thing) -> Self {
+        Id::Thing(value)
+    }
+}
+
+#[cfg(not(feature = "surrealdb"))]
+impl From<String> for Id {
+    fn from(value: String) -> Self {
+        Self::String(value)
+    }
 }
 
 impl std::str::FromStr for Id {
@@ -40,6 +63,7 @@ impl Display for Id {
             f,
             "{}",
             match self {
+                #[cfg(not(feature = "surrealdb"))]
                 Id::String(e) => e.to_owned(),
                 #[cfg(feature = "surrealdb")]
                 Id::Thing(e) => e.id.to_raw(),
@@ -50,6 +74,9 @@ impl Display for Id {
 
 impl Default for Id {
     fn default() -> Self {
-        Self::String(String::default())
+        #[cfg(not(feature = "surrealdb"))]
+        return Self::String(String::default());
+        #[cfg(feature = "surrealdb")]
+        return Self::Thing(surrealdb::sql::Thing::from(("category", "default")));
     }
 }
