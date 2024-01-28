@@ -9,7 +9,7 @@ struct Root;
 #[Object]
 impl Root {
     async fn output(&self) -> Category {
-        create_category().unwrap()
+        create_category()
     }
 
     async fn input(&self, category: Category) -> Category {
