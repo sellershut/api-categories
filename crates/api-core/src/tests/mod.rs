@@ -7,35 +7,40 @@ use crate::{tests::db::SampleDbSend, Category, Id};
 
 use self::db::SampleDb;
 
-fn create_category() -> Result<Category, serde_json::Error> {
-    let data = r#"
-        {
-            "id": "category:something",
-            "name": "Something",
-            "sub_categories": [],
-            "image_url": null,
-            "is_root": false
-        }"#;
-
-    serde_json::from_str::<Category>(data)
+fn create_category() -> Category {
+    Category {
+        #[cfg(feature = "surrealdb")]
+        id: Id::Thing(surrealdb::sql::Thing::from(("category", "something"))),
+        #[cfg(not(feature = "surrealdb"))]
+        id: Id::String("something".to_string()),
+        name: String::from("Something"),
+        sub_categories: Some(vec![]),
+        image_url: None,
+        is_root: false,
+    }
 }
 
 #[test]
-fn serialise() {
+fn encode() {
     let category = create_category();
-    dbg!(&category);
 
-    assert!(category.is_ok());
+    let json = serde_json::to_string(&category).unwrap();
+    dbg!(&json);
+    let bytes = bincode::serialize(&category).unwrap();
+
+    let value = serde_json::from_str::<Category>(&json);
+    dbg!(&value);
+
+    assert!(value.is_ok());
+    let val: Category = bincode::deserialize(&bytes[..]).unwrap();
+    assert_eq!(val, category);
 }
 
 #[test]
 fn deserialise_list() {
     let category = create_category();
 
-    let mut id = Id::default();
-    assert!(id.to_string().is_empty());
-
-    id = Id::from_str("category:something").expect("created id from str");
+    let id = Id::from_str("category:something").expect("created id from str");
     let category_2 = Category {
         id,
         name: "Something".into(),
@@ -43,10 +48,6 @@ fn deserialise_list() {
         image_url: None,
         is_root: true,
     };
-
-    assert!(&category.is_ok());
-
-    let category = category.unwrap();
 
     let categories = vec![category, category_2];
 
@@ -83,7 +84,7 @@ async fn query_returns() {
 async fn mutation_returns() {
     use crate::api::LocalMutateCategories;
 
-    let category = create_category().unwrap();
+    let category = create_category();
 
     let db = SampleDb.create_category(&category).await;
     assert!(db.is_ok());
@@ -99,7 +100,7 @@ async fn mutation_returns() {
 async fn mutation_returns_send() {
     use crate::api::MutateCategories;
 
-    let category = create_category().unwrap();
+    let category = create_category();
 
     let db = SampleDbSend.create_category(&category).await;
     assert!(db.is_ok());
