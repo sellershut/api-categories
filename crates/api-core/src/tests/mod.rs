@@ -53,9 +53,14 @@ fn deserialise_list() {
 
     let str_val = serde_json::to_string(&categories);
 
+    let bytes = bincode::serialize(&categories).unwrap();
+
+    let source = bincode::deserialize::<Vec<Category>>(&bytes[..]).unwrap();
+
     dbg!(&str_val);
 
     assert!(str_val.is_ok());
+    assert_eq!(source, categories);
 }
 
 #[tokio::test]
