@@ -1,8 +1,8 @@
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
 use async_graphql::{
-    extensions::{Extension, ExtensionContext, ExtensionFactory, NextPrepareRequest},
-    Request, ServerResult,
+    extensions::{Extension, ExtensionContext, ExtensionFactory, NextResolve, ResolveInfo},
+    ServerResult, Value,
 };
 use axum::async_trait;
 
@@ -18,13 +18,24 @@ struct MetricsExtension;
 
 #[async_trait]
 impl Extension for MetricsExtension {
-    async fn prepare_request(
+    /// Called at resolve field.
+    async fn resolve(
         &self,
         ctx: &ExtensionContext<'_>,
-        request: Request,
-        next: NextPrepareRequest<'_>,
-    ) -> ServerResult<Request> {
-        //println!("operation:query {:?}", request.query);
-        next.run(ctx, request).await
+        info: ResolveInfo<'_>,
+        next: NextResolve<'_>,
+    ) -> ServerResult<Option<Value>> {
+        let start = Instant::now();
+        let field = info.name;
+
+        let result = next.run(ctx, info).await;
+
+        let latency = start.elapsed().as_secs_f64();
+        let labels = [("field", field.to_string())];
+
+        metrics::counter!("graphql_field_calls_total", &labels).increment(1);
+        metrics::histogram!("graphql_field_resolve_seconds", &labels).record(latency);
+
+        result
     }
 }
