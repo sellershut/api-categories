@@ -2,6 +2,7 @@
 mod cluster;
 
 pub(crate) mod cache_keys;
+pub(crate) mod redis_query;
 
 use bb8::{Pool, RunError};
 use bb8_redis::RedisMultiplexedConnectionManager;
