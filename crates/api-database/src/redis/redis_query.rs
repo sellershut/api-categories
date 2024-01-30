@@ -9,12 +9,15 @@ pub async fn query<T: serde::de::DeserializeOwned>(
     match redis.get().await {
         Ok(mut redis) => match redis.get::<_, Vec<u8>>(cache_key).await {
             Ok(bytes) => {
-                // Cache Hit
-                match bincode::deserialize::<T>(&bytes) {
-                    Ok(value) => Some(value),
-                    Err(decode_err) => {
-                        error!(key = %cache_key, "[cache decode]: {decode_err}");
-                        None
+                if bytes.is_empty() {
+                    None
+                } else {
+                    match bincode::deserialize::<T>(&bytes[..]) {
+                        Ok(value) => Some(value),
+                        Err(decode_err) => {
+                            error!(key = %cache_key, "[cache decode]: {decode_err}");
+                            None
+                        }
                     }
                 }
             }
