@@ -1,21 +1,41 @@
-/* use std::fmt::Display;
+use std::fmt::Display;
 
-pub enum CacheKeys<'a> {
+use redis::ToRedisArgs;
+
+#[derive(Clone, Copy)]
+pub enum CacheKey<'a> {
     AllCategories,
-    SubCategories { parent: &'a str },
+    SubCategories { parent: Option<&'a str> },
     Category { id: &'a str },
 }
 
-impl Display for CacheKeys<'_> {
+impl Display for CacheKey<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
             "categories:{}",
             match self {
-                CacheKeys::AllCategories => "all".to_string(),
-                CacheKeys::SubCategories { parent } => format!("parent={parent}"),
-                CacheKeys::Category { id } => format!("id={id}"),
+                CacheKey::AllCategories => "all".to_string(),
+                CacheKey::SubCategories { parent } => format!(
+                    "parent={}",
+                    match parent {
+                        Some(id) => id,
+                        None => {
+                            ""
+                        }
+                    }
+                ),
+                CacheKey::Category { id } => format!("id={id}"),
             }
         )
     }
-} */
+}
+
+impl ToRedisArgs for CacheKey<'_> {
+    fn write_redis_args<W>(&self, out: &mut W)
+    where
+        W: ?Sized + redis::RedisWrite,
+    {
+        out.write_arg(self.to_string().as_bytes())
+    }
+}
