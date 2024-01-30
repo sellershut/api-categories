@@ -164,6 +164,7 @@ dependencies = [
  "async-trait",
  "bb8",
  "bb8-redis",
+ "bincode",
  "criterion",
  "dotenvy",
  "fake",

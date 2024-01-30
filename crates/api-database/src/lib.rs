@@ -17,7 +17,7 @@ use self::redis::RedisPool;
 pub struct Client {
     client: Surreal<SurrealClient>,
     redis: Option<RedisPool>,
-    _cache_ttl: u16,
+    cache_ttl: u64,
 }
 
 impl Client {
@@ -40,7 +40,7 @@ impl Client {
 
         Ok(Client {
             client: db,
-            _cache_ttl: 5,
+            cache_ttl: 1500,
             redis: match redis {
                 Some((dsn, clustered, size)) => Some(if clustered {
                     redis::new_redis_pool_clustered(dsn, size).await
