@@ -20,6 +20,7 @@ pub struct AppState {
     redis_dsn: String,
     redis_clustered: bool,
     db_pool_size: u16,
+    cache_ttl: u64,
 }
 
 impl AppState {
@@ -66,6 +67,7 @@ impl AppState {
         let redis_dsn = env::extract_variable(redis_host, "redis://localhost:6379");
         let redis_clustered = env::extract_variable(redis_is_cluster, "false");
         let pool_size = env::extract_variable("DB_POOL_SIZE", "10");
+        let cache_ttl = env::extract_variable("CACHE_TTL_MS", "5000");
 
         let metrics_handle = setup_metrics_recorder()?;
 
@@ -92,6 +94,10 @@ impl AppState {
                 );
                 10
             }),
+            cache_ttl: cache_ttl.parse().unwrap_or_else(|_| {
+                error!(val = cache_ttl, default = 5000, "cache ttl invalid");
+                5000
+            }),
         })
     }
 
@@ -110,6 +116,7 @@ impl AppState {
             redis_dsn: &self.redis_dsn,
             clustered: self.redis_clustered,
             pool_size: self.db_pool_size,
+            ttl: self.cache_ttl,
         }
     }
 }

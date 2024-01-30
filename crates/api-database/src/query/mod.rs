@@ -16,7 +16,7 @@ use crate::{
 impl QueryCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
-        if let Some(ref redis) = self.redis {
+        if let Some((ref redis, ttl)) = self.redis {
             let cache_key = CacheKey::AllCategories;
             let categories = redis_query::query::<Vec<Category>>(cache_key, redis).await;
 
@@ -25,9 +25,7 @@ impl QueryCategories for Client {
             } else {
                 let categories: Vec<Category> = self.client.select(Collections::Category).await?;
 
-                if let Err(e) =
-                    redis_query::update(cache_key, redis, &categories, self.cache_ttl).await
-                {
+                if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
                     error!(key = %cache_key, "[redis update]: {e}");
                 }
 
@@ -52,7 +50,7 @@ impl QueryCategories for Client {
                 format!("SELECT * FROM {} WHERE is_root=true", Collections::Category)
             })
         };
-        if let Some(ref redis) = self.redis {
+        if let Some((ref redis, ttl)) = self.redis {
             let cache_key = CacheKey::SubCategories { parent: id };
 
             let categories = redis_query::query::<Vec<Category>>(cache_key, redis).await;
@@ -62,9 +60,7 @@ impl QueryCategories for Client {
                 let mut resp = caller(id).await?;
                 let categories: Vec<Category> = resp.take(0)?;
 
-                if let Err(e) =
-                    redis_query::update(cache_key, redis, &categories, self.cache_ttl).await
-                {
+                if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
                     error!(key = %cache_key, "[redis update]: {e}");
                 }
                 Ok(categories.into_iter())
@@ -90,7 +86,7 @@ impl QueryCategories for Client {
             return Err(CoreError::Other("Id cannot be empty".into()));
         }
 
-        if let Some(ref redis) = self.redis {
+        if let Some((ref redis, ttl)) = self.redis {
             let cache_key = CacheKey::Category { id };
 
             let category = redis_query::query::<Category>(cache_key, redis).await;
@@ -102,8 +98,7 @@ impl QueryCategories for Client {
 
                 let category = self.client.select(id).await?;
 
-                if let Err(e) =
-                    redis_query::update(cache_key, redis, category.as_ref(), self.cache_ttl).await
+                if let Err(e) = redis_query::update(cache_key, redis, category.as_ref(), ttl).await
                 {
                     error!(key = %cache_key, "[redis update]: {e}");
                 }

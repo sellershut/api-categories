@@ -21,6 +21,7 @@ pub struct RedisConfig<'a> {
     pub redis_dsn: &'a str,
     pub clustered: bool,
     pub pool_size: u16,
+    pub ttl: u64,
 }
 
 pub struct ApiSchemaBuilder {
@@ -46,7 +47,7 @@ impl ApiSchemaBuilder {
             database.db_pass,
             database.db_ns,
             database.db,
-            redis.map(|f| (f.redis_dsn, f.clustered, f.pool_size)),
+            redis.map(|f| (f.redis_dsn, f.clustered, f.pool_size, f.ttl)),
         )
         .await?;
 
