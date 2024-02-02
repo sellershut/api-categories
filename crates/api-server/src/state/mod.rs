@@ -21,6 +21,8 @@ pub struct AppState {
     redis_clustered: bool,
     db_pool_size: u16,
     cache_ttl: u64,
+    meilisearch_host: String,
+    meilisearch_api_key: Option<String>,
 }
 
 impl AppState {
@@ -69,6 +71,14 @@ impl AppState {
         let pool_size = env::extract_variable("DB_POOL_SIZE", "10");
         let cache_ttl = env::extract_variable("CACHE_TTL_MS", "5000");
 
+        let meilisearch_host = env::extract_variable("MEILISEARCH_HOST", "http://localhost:7700");
+        let meilisearch_api_key = env::extract_variable("MEILISEARCH_API_KEY", "");
+        let meilisearch_api_key = if meilisearch_api_key.is_empty() {
+            None
+        } else {
+            Some(meilisearch_api_key)
+        };
+
         let metrics_handle = setup_metrics_recorder()?;
 
         Ok(AppState {
@@ -82,6 +92,8 @@ impl AppState {
             frontend_url,
             metrics_handle,
             redis_dsn,
+            meilisearch_host,
+            meilisearch_api_key,
             redis_clustered: redis_clustered.parse().unwrap_or_else(|_| {
                 warn!("REDIS_CLUSTER is not a boolean value");
                 false
@@ -109,6 +121,10 @@ impl AppState {
             db_ns: &self.database_namespace,
             db: &self.database_name,
         }
+    }
+
+    pub fn meilisearch_credentials(&self) -> (&str, Option<&str>) {
+        (&self.meilisearch_host, self.meilisearch_api_key.as_deref())
     }
 
     pub fn redis_credentials(&self) -> RedisConfig {

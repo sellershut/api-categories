@@ -39,6 +39,7 @@ impl ApiSchemaBuilder {
     pub async fn new(
         database: DatabaseCredentials<'_>,
         redis: Option<RedisConfig<'_>>,
+        meilisearch: Option<(&str, Option<&str>)>,
     ) -> Result<Self, SchemaError> {
         trace!("creating database client");
         let db_client = Client::try_new(
@@ -48,6 +49,7 @@ impl ApiSchemaBuilder {
             database.db_ns,
             database.db,
             redis.map(|f| (f.redis_dsn, f.clustered, f.pool_size, f.ttl)),
+            meilisearch,
         )
         .await?;
 

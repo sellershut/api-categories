@@ -29,6 +29,7 @@ tracing = "0.1.40"
 trait-variant = "0.1.1"
 uuid = "1.7.0"
 
+# https://github.com/meilisearch/meilisearch-rust/pull/524
 [patch.crates-io]
 meilisearch-sdk = { git = "https://github.com/rtkay123/meilisearch-rust", branch = "request_clients" }
 

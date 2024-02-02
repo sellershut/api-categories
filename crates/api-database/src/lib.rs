@@ -18,11 +18,11 @@ use self::redis::RedisPool;
 pub struct Client {
     client: Surreal<SurrealClient>,
     redis: Option<(RedisPool, u64)>,
-    search_client: meilisearch_sdk::Client,
+    search_client: Option<meilisearch_sdk::Client>,
 }
 
 impl Client {
-    #[instrument(skip(username, password, namespace, database))]
+    #[instrument(skip_all)]
     pub async fn try_new(
         dsn: &str,
         username: &str,
@@ -30,11 +30,10 @@ impl Client {
         namespace: &str,
         database: &str,
         redis: Option<(&str, bool, u16, u64)>,
+        meilisearch: Option<(&str, Option<&str>)>,
     ) -> Result<Self, ClientError> {
         trace!("connecting to database");
         let db = Surreal::new::<Ws>(dsn).await?;
-
-        let search_client = meilisearch_sdk::Client::new("http://localhost:7700", None::<String>);
 
         // Signin as a namespace, database, or root user
         db.signin(Root { username, password }).await?;
@@ -43,7 +42,8 @@ impl Client {
 
         Ok(Client {
             client: db,
-            search_client,
+            search_client: meilisearch
+                .map(|(host, api_key)| meilisearch_sdk::Client::new(host, api_key)),
             redis: match redis {
                 Some((dsn, clustered, size, ttl)) => Some((
                     if clustered {

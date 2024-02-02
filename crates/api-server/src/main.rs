@@ -53,6 +53,7 @@ async fn create_router(state: state::AppState) -> Result<Router> {
     let schema_builder = api_interface::ApiSchemaBuilder::new(
         state.database_credentials(),
         Some(state.redis_credentials()),
+        Some(state.meilisearch_credentials()),
     )
     .await?
     .with_extension(Tracing)
