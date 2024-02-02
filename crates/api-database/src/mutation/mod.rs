@@ -2,27 +2,30 @@ use std::fmt::Debug;
 
 use api_core::{
     api::{CoreError, MutateCategories},
-    Category, Id,
+    Category,
 };
-use surrealdb::sql::Thing;
+use surrealdb::{opt::RecordId, sql::Thing};
 use tracing::instrument;
+use uuid::Uuid;
 
-use crate::{collections::Collections, Client};
+use crate::{collections::Collections, entity::DatabaseEntity, Client};
 
 impl MutateCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn create_category(&self, category: &Category) -> Result<Category, CoreError> {
         let input_category = InputCategory::from(category);
 
-        let item: Vec<Category> = self
+        let id = Uuid::now_v7().to_string();
+        let item: Option<DatabaseEntity> = self
             .client
-            .create("category")
+            .create(("category", id))
             .content(input_category)
-            .await?;
+            .await
+            .unwrap();
 
-        match item.into_iter().nth(0) {
-            Some(category) => Ok(category),
-            None => unreachable!("create returned no elements"),
+        match item {
+            Some(e) => Category::try_from(e),
+            None => Err(CoreError::Unreachable),
         }
     }
 
@@ -37,9 +40,18 @@ impl MutateCategories for Client {
 
         let input_category = InputCategory::from(data);
 
-        let item: Option<Category> = self.client.update(id).content(input_category).await?;
+        let item: Option<DatabaseEntity> = self
+            .client
+            .update(id)
+            .content(input_category)
+            .await
+            .unwrap();
+        let res = match item {
+            Some(e) => Some(Category::try_from(e)?),
+            None => None,
+        };
 
-        Ok(item)
+        Ok(res)
     }
 
     #[instrument(skip(self, id), err(Debug))]
@@ -49,7 +61,11 @@ impl MutateCategories for Client {
     ) -> Result<Option<Category>, CoreError> {
         let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
 
-        let res = self.client.delete(id).await?;
+        let res: Option<DatabaseEntity> = self.client.delete(id).await.unwrap();
+        let res = match res {
+            Some(e) => Some(Category::try_from(e)?),
+            None => None,
+        };
 
         Ok(res)
     }
@@ -58,7 +74,7 @@ impl MutateCategories for Client {
 #[derive(serde::Serialize)]
 struct InputCategory<'a> {
     name: &'a str,
-    sub_categories: Option<&'a [Id]>,
+    sub_categories: Option<Vec<RecordId>>,
     image_url: Option<&'a str>,
     is_root: bool,
 }
@@ -67,7 +83,11 @@ impl<'a> From<&'a Category> for InputCategory<'a> {
     fn from(value: &'a Category) -> Self {
         Self {
             name: &value.name,
-            sub_categories: value.sub_categories.as_deref(),
+            sub_categories: value.sub_categories.as_ref().map(|f| {
+                f.iter()
+                    .map(|str| RecordId::from(("category", str.to_string().as_str())))
+                    .collect()
+            }),
             image_url: value.image_url.as_deref(),
             is_root: value.is_root,
         }

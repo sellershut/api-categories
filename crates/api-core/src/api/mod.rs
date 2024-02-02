@@ -1,8 +1,9 @@
-use std::{fmt::Debug, str::FromStr};
-
-use thiserror::Error;
+mod error;
+pub use std::fmt::Debug;
 
 use crate::Category;
+
+pub use error::*;
 
 #[trait_variant::make(QueryCategories: Send)]
 pub trait LocalQueryCategories {
@@ -29,23 +30,4 @@ pub trait LocalMutateCategories {
         &self,
         id: impl AsRef<str> + Send + Debug,
     ) -> Result<Option<Category>, CoreError>;
-}
-
-#[derive(Error, Debug)]
-pub enum CoreError {
-    #[cfg(feature = "surrealdb")]
-    #[error(transparent)]
-    Database(#[from] surrealdb::Error),
-    #[error("`{0}`")]
-    Other(String),
-    #[error("unknown core error")]
-    Unknown,
-}
-
-impl FromStr for CoreError {
-    type Err = Self;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        Ok(Self::Other(s.to_owned()))
-    }
 }

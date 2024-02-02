@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 mod collections;
+pub(crate) mod entity;
 mod mutation;
 mod query;
 mod redis;

@@ -6,7 +6,7 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-api-core = { workspace = true, features = ["serde", "surrealdb"] }
+api-core = { workspace = true, features = ["serde"] }
 async-trait.workspace = true
 bb8 = "0.8.2"
 bb8-redis = "0.14.0"
@@ -17,6 +17,7 @@ serde_json = "1.0.113"
 surrealdb.workspace = true
 thiserror.workspace = true
 tracing.workspace = true
+uuid = { workspace = true, features = ["fast-rng"] }
 
 [dev-dependencies]
 anyhow.workspace = true

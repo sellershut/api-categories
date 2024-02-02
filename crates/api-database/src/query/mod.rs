@@ -9,6 +9,7 @@ use tracing::{error, instrument};
 
 use crate::{
     collections::Collections,
+    entity::DatabaseEntity,
     redis::{cache_keys::CacheKey, redis_query},
     Client,
 };
@@ -23,7 +24,13 @@ impl QueryCategories for Client {
             if let Some(categories) = categories {
                 Ok(categories.into_iter())
             } else {
-                let categories: Vec<Category> = self.client.select(Collections::Category).await?;
+                let categories: Vec<DatabaseEntity> =
+                    self.client.select(Collections::Category).await.unwrap();
+
+                let categories = categories
+                    .into_iter()
+                    .map(Category::try_from)
+                    .collect::<Result<Vec<Category>, CoreError>>()?;
 
                 if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
                     error!(key = %cache_key, "[redis update]: {e}");
@@ -32,7 +39,12 @@ impl QueryCategories for Client {
                 Ok(categories.into_iter())
             }
         } else {
-            let categories: Vec<Category> = self.client.select(Collections::Category).await?;
+            let categories: Vec<DatabaseEntity> =
+                self.client.select(Collections::Category).await.unwrap();
+            let categories = categories
+                .into_iter()
+                .map(Category::try_from)
+                .collect::<Result<Vec<Category>, CoreError>>()?;
             Ok(categories.into_iter())
         }
     }
@@ -57,8 +69,12 @@ impl QueryCategories for Client {
             if let Some(categories) = categories {
                 Ok(categories.into_iter())
             } else {
-                let mut resp = caller(id).await?;
-                let categories: Vec<Category> = resp.take(0)?;
+                let mut resp = caller(id).await.unwrap();
+                let categories: Vec<DatabaseEntity> = resp.take(0).unwrap();
+                let categories = categories
+                    .into_iter()
+                    .map(Category::try_from)
+                    .collect::<Result<Vec<Category>, CoreError>>()?;
 
                 if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
                     error!(key = %cache_key, "[redis update]: {e}");
@@ -66,8 +82,12 @@ impl QueryCategories for Client {
                 Ok(categories.into_iter())
             }
         } else {
-            let mut resp = caller(id).await?;
-            let categories: Vec<Category> = resp.take(0)?;
+            let mut resp = caller(id).await.unwrap();
+            let categories: Vec<DatabaseEntity> = resp.take(0).unwrap();
+            let categories = categories
+                .into_iter()
+                .map(Category::try_from)
+                .collect::<Result<Vec<Category>, CoreError>>()?;
 
             Ok(categories.into_iter())
         }
@@ -96,7 +116,14 @@ impl QueryCategories for Client {
             } else {
                 let id = create_id(id);
 
-                let category = self.client.select(id).await?;
+                let category: Option<DatabaseEntity> = self.client.select(id).await.unwrap();
+                let category = category.and_then(|f| match Category::try_from(f) {
+                    Ok(cat) => Some(cat),
+                    Err(e) => {
+                        error!("{e}");
+                        None
+                    }
+                });
 
                 if let Err(e) = redis_query::update(cache_key, redis, category.as_ref(), ttl).await
                 {
@@ -107,7 +134,14 @@ impl QueryCategories for Client {
         } else {
             let id = create_id(id);
 
-            let category = self.client.select(id).await?;
+            let category: Option<DatabaseEntity> = self.client.select(id).await.unwrap();
+            let category = category.and_then(|f| match Category::try_from(f) {
+                Ok(cat) => Some(cat),
+                Err(e) => {
+                    error!("{e}");
+                    None
+                }
+            });
 
             Ok(category)
         }
