@@ -39,7 +39,11 @@ impl TryFrom<DatabaseEntity> for Category {
         Ok(Category {
             id,
             name: entity.name,
-            sub_categories: Some(sub_categories),
+            sub_categories: if sub_categories.is_empty() {
+                None
+            } else {
+                Some(sub_categories)
+            },
             image_url: entity.image_url,
             is_root: entity.is_root,
         })

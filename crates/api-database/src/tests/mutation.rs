@@ -2,12 +2,13 @@ use super::create_client;
 use anyhow::Result;
 use api_core::{
     api::{MutateCategories, QueryCategories},
-    Category, Id,
+    Category,
 };
+use uuid::Uuid;
 
 fn create_category_item() -> Category {
     Category {
-        id: Id::default(),
+        id: Uuid::now_v7(),
         name: "TestCategoryInput".into(),
         sub_categories: None,
         image_url: None,
@@ -48,7 +49,7 @@ async fn create_get_by_id() -> Result<()> {
     let client = create_client(Some("test-mutation-update")).await?;
 
     let input = client.create_category(&category).await?;
-    let id = input.id.clone();
+    let id = input.id;
 
     let get_by_id = client.get_category_by_id(&input.id.to_string()).await?;
     assert_eq!(get_by_id, Some(input));

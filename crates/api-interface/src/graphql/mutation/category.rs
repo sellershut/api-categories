@@ -22,7 +22,7 @@ impl CategoryMutation {
             Ok(category) => {
                 SimpleBroker::publish(CategoryChanged {
                     mutation_type: super::MutationType::Created,
-                    id: category.id.into()
+                    id: category.id.into(),
                 });
 
                 Ok(category)
