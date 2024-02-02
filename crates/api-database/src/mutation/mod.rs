@@ -21,7 +21,7 @@ impl MutateCategories for Client {
             .create(("category", id))
             .content(input_category)
             .await
-            .unwrap();
+            .map_err(|e| CoreError::Database(e.to_string()))?;
 
         match item {
             Some(e) => Category::try_from(e),
@@ -45,7 +45,7 @@ impl MutateCategories for Client {
             .update(id)
             .content(input_category)
             .await
-            .unwrap();
+            .map_err(|e| CoreError::Database(e.to_string()))?;
         let res = match item {
             Some(e) => Some(Category::try_from(e)?),
             None => None,
@@ -61,7 +61,11 @@ impl MutateCategories for Client {
     ) -> Result<Option<Category>, CoreError> {
         let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
 
-        let res: Option<DatabaseEntity> = self.client.delete(id).await.unwrap();
+        let res: Option<DatabaseEntity> = self
+            .client
+            .delete(id)
+            .await
+            .map_err(|e| CoreError::Database(e.to_string()))?;
         let res = match res {
             Some(e) => Some(Category::try_from(e)?),
             None => None,

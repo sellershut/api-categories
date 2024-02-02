@@ -25,8 +25,11 @@ impl QueryCategories for Client {
             if let Some(categories) = categories {
                 Ok(categories.into_iter())
             } else {
-                let categories: Vec<DatabaseEntity> =
-                    self.client.select(Collections::Category).await.unwrap();
+                let categories: Vec<DatabaseEntity> = self
+                    .client
+                    .select(Collections::Category)
+                    .await
+                    .map_err(|e| CoreError::Database(e.to_string()))?;
 
                 let categories = categories
                     .into_iter()
@@ -36,7 +39,10 @@ impl QueryCategories for Client {
                 if let Some(ref client) = self.search_client {
                     debug!("indexing categories for search");
                     let index = client.index("categories");
-                    index.add_documents(&categories, Some("id")).await.unwrap();
+                    index
+                        .add_documents(&categories, Some("id"))
+                        .await
+                        .map_err(|e| CoreError::Other(e.to_string()))?;
                 }
 
                 if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
@@ -47,7 +53,10 @@ impl QueryCategories for Client {
             }
         } else {
             let categories: Vec<DatabaseEntity> =
-                self.client.select(Collections::Category).await.unwrap();
+                self.client
+                    .select(Collections::Category)
+                    .await
+                    .map_err(|e| CoreError::Database(e.to_string()))?;
             let categories = categories
                 .into_iter()
                 .map(Category::try_from)
@@ -76,8 +85,12 @@ impl QueryCategories for Client {
             if let Some(categories) = categories {
                 Ok(categories.into_iter())
             } else {
-                let mut resp = caller(id).await.unwrap();
-                let categories: Vec<DatabaseEntity> = resp.take(0).unwrap();
+                let mut resp = caller(id)
+                    .await
+                    .map_err(|e| CoreError::Database(e.to_string()))?;
+                let categories: Vec<DatabaseEntity> = resp
+                    .take(0)
+                    .map_err(|e| CoreError::Database(e.to_string()))?;
                 let categories = categories
                     .into_iter()
                     .map(Category::try_from)
@@ -89,8 +102,12 @@ impl QueryCategories for Client {
                 Ok(categories.into_iter())
             }
         } else {
-            let mut resp = caller(id).await.unwrap();
-            let categories: Vec<DatabaseEntity> = resp.take(0).unwrap();
+            let mut resp = caller(id)
+                .await
+                .map_err(|e| CoreError::Database(e.to_string()))?;
+            let categories: Vec<DatabaseEntity> = resp
+                .take(0)
+                .map_err(|e| CoreError::Database(e.to_string()))?;
             let categories = categories
                 .into_iter()
                 .map(Category::try_from)
@@ -123,7 +140,11 @@ impl QueryCategories for Client {
             } else {
                 let id = create_id(id);
 
-                let category: Option<DatabaseEntity> = self.client.select(id).await.unwrap();
+                let category: Option<DatabaseEntity> = self
+                    .client
+                    .select(id)
+                    .await
+                    .map_err(|e| CoreError::Database(e.to_string()))?;
                 let category = category.and_then(|f| match Category::try_from(f) {
                     Ok(cat) => Some(cat),
                     Err(e) => {
@@ -141,7 +162,11 @@ impl QueryCategories for Client {
         } else {
             let id = create_id(id);
 
-            let category: Option<DatabaseEntity> = self.client.select(id).await.unwrap();
+            let category: Option<DatabaseEntity> = self
+                .client
+                .select(id)
+                .await
+                .map_err(|e| CoreError::Database(e.to_string()))?;
             let category = category.and_then(|f| match Category::try_from(f) {
                 Ok(cat) => Some(cat),
                 Err(e) => {
@@ -159,11 +184,17 @@ impl QueryCategories for Client {
         query: impl AsRef<str> + Send + Debug,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
         if let Some(ref client) = self.search_client {
-            let index = client.get_index("categories").await.unwrap();
+            let index = client
+                .get_index("categories")
+                .await
+                .map_err(|e| CoreError::Other(e.to_string()))?;
 
             let query = SearchQuery::new(&index).with_query(query.as_ref()).build();
 
-            let results: SearchResults<Category> = index.execute_query(&query).await.unwrap();
+            let results: SearchResults<Category> = index
+                .execute_query(&query)
+                .await
+                .map_err(|e| CoreError::Database(e.to_string()))?;
 
             let search_results: Vec<Category> = results
                 .hits
