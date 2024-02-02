@@ -4,6 +4,7 @@ use api_core::{
     api::{CoreError, QueryCategories},
     Category,
 };
+use meilisearch_sdk::{SearchQuery, SearchResults};
 use surrealdb::sql::Thing;
 use tracing::{error, instrument};
 
@@ -148,5 +149,30 @@ impl QueryCategories for Client {
 
             Ok(category)
         }
+    }
+
+    async fn search(
+        &self,
+        query: impl AsRef<str> + Send + Debug,
+    ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
+        let index = self.search_client.get_index("categories").await.unwrap();
+
+        let query = SearchQuery::new(&index).with_query(query.as_ref()).build();
+
+        let results: SearchResults<Category> = index.execute_query(&query).await.unwrap();
+
+        let search_results: Vec<Category> = results
+            .hits
+            .into_iter()
+            .map(|hit| Category {
+                id: hit.result.id,
+                name: hit.result.name,
+                sub_categories: hit.result.sub_categories,
+                is_root: hit.result.is_root,
+                image_url: hit.result.image_url,
+            })
+            .collect();
+
+        Ok(search_results.into_iter())
     }
 }

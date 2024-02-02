@@ -12,6 +12,10 @@ pub trait LocalQueryCategories {
         &self,
         id: Option<impl AsRef<str> + Send + Debug>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError>;
+    async fn search(
+        &self,
+        query: impl AsRef<str> + Send + Debug,
+    ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError>;
     async fn get_category_by_id(
         &self,
         id: impl AsRef<str> + Send + Debug,
