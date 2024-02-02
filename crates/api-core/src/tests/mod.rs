@@ -1,18 +1,14 @@
 mod async_graphql;
 mod db;
 
-use std::str::FromStr;
-
-use crate::{tests::db::SampleDbSend, Category, Id};
+use crate::{tests::db::SampleDbSend, Category};
 
 use self::db::SampleDb;
+use uuid::Uuid;
 
 fn create_category() -> Category {
     Category {
-        #[cfg(feature = "surrealdb")]
-        id: Id::Thing(surrealdb::sql::Thing::from(("category", "something"))),
-        #[cfg(not(feature = "surrealdb"))]
-        id: Id::String("something".to_string()),
+        id: Uuid::now_v7(),
         name: String::from("Something"),
         sub_categories: Some(vec![]),
         image_url: None,
@@ -40,9 +36,8 @@ fn encode() {
 fn deserialise_list() {
     let category = create_category();
 
-    let id = Id::from_str("category:something").expect("created id from str");
     let category_2 = Category {
-        id,
+        id: Uuid::now_v7(),
         name: "Something".into(),
         sub_categories: None,
         image_url: None,

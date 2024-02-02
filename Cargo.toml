@@ -26,6 +26,7 @@ thiserror = "1.0.56"
 tokio = "1.35.1"
 tracing = "0.1.40"
 trait-variant = "0.1.1"
+uuid = "1.7.0"
 
 [profile.release]
 lto = true

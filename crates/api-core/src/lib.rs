@@ -1,12 +1,11 @@
 pub mod api;
-mod id;
-pub use id::*;
 
 #[cfg(feature = "async-graphql")]
 use async_graphql::*;
 
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, PartialEq, PartialOrd, Ord, Eq, Clone)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -15,11 +14,11 @@ use serde::{Deserialize, Serialize};
 pub struct Category {
     /// Category ID
     #[cfg_attr(feature = "async-graphql", graphql(skip_input))]
-    pub id: Id,
+    pub id: Uuid,
     /// Category name
     pub name: String,
     /// A list of IDs that are subcategories for the current item
-    pub sub_categories: Option<Vec<Id>>, // empty vec wont work for playground type
+    pub sub_categories: Option<Vec<Uuid>>, // empty vec wont work for playground type
     /// An image representing the current ID
     pub image_url: Option<String>,
     /// Is the current category a sub category
