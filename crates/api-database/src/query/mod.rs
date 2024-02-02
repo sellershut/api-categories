@@ -32,6 +32,9 @@ impl QueryCategories for Client {
                     .map(Category::try_from)
                     .collect::<Result<Vec<Category>, CoreError>>()?;
 
+                let index = self.search_client.index("categories");
+                index.add_documents(&categories, Some("id")).await.unwrap();
+
                 if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
                     error!(key = %cache_key, "[redis update]: {e}");
                 }
