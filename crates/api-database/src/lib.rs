@@ -1,3 +1,4 @@
+use api_core::api::CoreError;
 use thiserror::Error;
 
 mod collections;
@@ -14,6 +15,10 @@ use surrealdb::{
 use tracing::{instrument, trace};
 
 use self::redis::RedisPool;
+
+pub(crate) fn map_db_error(error: surrealdb::Error) -> CoreError {
+    CoreError::Database(error.to_string())
+}
 
 pub struct Client {
     client: Surreal<SurrealClient>,

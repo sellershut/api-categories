@@ -8,14 +8,15 @@ use surrealdb::{opt::RecordId, sql::Thing};
 use tracing::instrument;
 use uuid::Uuid;
 
-use crate::{collections::Collections, entity::DatabaseEntity, Client};
+use crate::{collections::Collections, entity::DatabaseEntity, map_db_error, Client};
 
 impl MutateCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn create_category(&self, category: &Category) -> Result<Category, CoreError> {
         if let Some(ref parent) = category.parent_id {
             let id = Thing::from(("category", parent.to_string().as_str()));
-            let item: Option<DatabaseEntity> = self.client.select(&id).await.unwrap();
+            let item: Option<DatabaseEntity> =
+                self.client.select(&id).await.map_err(map_db_error)?;
             if item.is_none() {
                 return Err(CoreError::Database(format!(
                     "provided parent does not exist: {id}"
@@ -30,7 +31,7 @@ impl MutateCategories for Client {
             .create(("category", id))
             .content(input_category)
             .await
-            .map_err(|e| CoreError::Database(e.to_string()))?;
+            .map_err(map_db_error)?;
 
         match item {
             Some(e) => Category::try_from(e),
@@ -46,7 +47,8 @@ impl MutateCategories for Client {
     ) -> Result<Option<Category>, CoreError> {
         if let Some(ref parent) = data.parent_id {
             let id = Thing::from(("category", parent.to_string().as_str()));
-            let item: Option<DatabaseEntity> = self.client.select(&id).await.unwrap();
+            let item: Option<DatabaseEntity> =
+                self.client.select(&id).await.map_err(map_db_error)?;
             if item.is_none() {
                 return Err(CoreError::Database(format!(
                     "provided parent does not exist: {id}"
@@ -64,7 +66,7 @@ impl MutateCategories for Client {
             .update(id)
             .content(input_category)
             .await
-            .map_err(|e| CoreError::Database(e.to_string()))?;
+            .map_err(map_db_error)?;
         let res = match item {
             Some(e) => Some(Category::try_from(e)?),
             None => None,
@@ -80,11 +82,7 @@ impl MutateCategories for Client {
     ) -> Result<Option<Category>, CoreError> {
         let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
 
-        let res: Option<DatabaseEntity> = self
-            .client
-            .delete(id)
-            .await
-            .map_err(|e| CoreError::Database(e.to_string()))?;
+        let res: Option<DatabaseEntity> = self.client.delete(id).await.map_err(map_db_error)?;
         let res = match res {
             Some(e) => Some(Category::try_from(e)?),
             None => None,
