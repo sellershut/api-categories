@@ -21,8 +21,8 @@ pub struct Category {
     pub sub_categories: Option<Vec<Uuid>>, // empty vec wont work for playground type
     /// An image representing the current ID
     pub image_url: Option<String>,
-    /// Is the current category a sub category
-    pub is_root: bool,
+    /// Id of this category's parent
+    pub parent_id: Option<Uuid>,
 }
 
 #[cfg(test)]

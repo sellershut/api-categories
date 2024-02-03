@@ -18,7 +18,7 @@ fn bench(c: &mut Criterion) {
             name: words,
             sub_categories: Some(sub_categories),
             image_url: None,
-            is_root: false,
+            parent_id: None,
         };
 
         categories.push(category);

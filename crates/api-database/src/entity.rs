@@ -9,7 +9,7 @@ pub(crate) struct DatabaseEntity {
     pub name: String,
     pub sub_categories: Option<Vec<RecordId>>, // empty vec wont work for playground type
     pub image_url: Option<String>,
-    pub is_root: bool,
+    pub parent_id: Option<RecordId>,
 }
 
 impl TryFrom<DatabaseEntity> for Category {
@@ -36,6 +36,11 @@ impl TryFrom<DatabaseEntity> for Category {
                 .collect::<Result<Vec<Uuid>, _>>()
         })?;
 
+        let parent_id = entity.parent_id.map_or(
+            Ok::<Option<Result<uuid::Uuid, _>>, Self::Error>(None),
+            |f| Ok(Some(Uuid::parse_str(&id_to_string(&f.id)))),
+        )?;
+
         Ok(Category {
             id,
             name: entity.name,
@@ -45,7 +50,10 @@ impl TryFrom<DatabaseEntity> for Category {
                 Some(sub_categories)
             },
             image_url: entity.image_url,
-            is_root: entity.is_root,
+            parent_id: match parent_id {
+                Some(parent_id) => Some(parent_id?),
+                None => None,
+            },
         })
     }
 }

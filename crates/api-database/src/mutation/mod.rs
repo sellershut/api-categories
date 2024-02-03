@@ -13,6 +13,15 @@ use crate::{collections::Collections, entity::DatabaseEntity, Client};
 impl MutateCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn create_category(&self, category: &Category) -> Result<Category, CoreError> {
+        if let Some(ref parent) = category.parent_id {
+            let id = Thing::from(("category", parent.to_string().as_str()));
+            let item: Option<DatabaseEntity> = self.client.select(&id).await.unwrap();
+            if item.is_none() {
+                return Err(CoreError::Database(format!(
+                    "provided parent does not exist: {id}"
+                )));
+            }
+        }
         let input_category = InputCategory::from(category);
 
         let id = Uuid::now_v7().to_string();
@@ -35,6 +44,16 @@ impl MutateCategories for Client {
         id: impl AsRef<str> + Send + Debug,
         data: &Category,
     ) -> Result<Option<Category>, CoreError> {
+        if let Some(ref parent) = data.parent_id {
+            let id = Thing::from(("category", parent.to_string().as_str()));
+            let item: Option<DatabaseEntity> = self.client.select(&id).await.unwrap();
+            if item.is_none() {
+                return Err(CoreError::Database(format!(
+                    "provided parent does not exist: {id}"
+                )));
+            }
+        }
+
         let id = id.as_ref();
         let id = Thing::from((Collections::Category.to_string().as_str(), id));
 
@@ -80,7 +99,7 @@ struct InputCategory<'a> {
     name: &'a str,
     sub_categories: Option<Vec<RecordId>>,
     image_url: Option<&'a str>,
-    is_root: bool,
+    parent_id: Option<RecordId>,
 }
 
 impl<'a> From<&'a Category> for InputCategory<'a> {
@@ -93,7 +112,10 @@ impl<'a> From<&'a Category> for InputCategory<'a> {
                     .collect()
             }),
             image_url: value.image_url.as_deref(),
-            is_root: value.is_root,
+            parent_id: value
+                .parent_id
+                .as_ref()
+                .map(|f| RecordId::from(("category", f.to_string().as_str()))),
         }
     }
 }
