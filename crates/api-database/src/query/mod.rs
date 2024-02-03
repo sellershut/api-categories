@@ -77,7 +77,7 @@ impl QueryCategories for Client {
                 format!("SELECT sub_categories.*.* FROM {};", parent)
             } else {
                 format!(
-                    "SELECT * FROM {} WHERE parent_id IS NOT NULL",
+                    "SELECT * FROM {} WHERE parent_id is none or null",
                     Collections::Category
                 )
             })
