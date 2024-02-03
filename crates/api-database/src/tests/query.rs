@@ -35,7 +35,7 @@ async fn check_sub_categories(id: Option<&str>, expected_result: bool) -> Result
             let categories: Vec<_> = categories.collect();
             if !categories.is_empty() {
                 for category in categories {
-                    assert_eq!(expected_result, category.is_root);
+                    assert_eq!(expected_result, category.parent_id.is_none());
                 }
             } else {
                 assert!(expected_result);

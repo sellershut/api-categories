@@ -12,7 +12,7 @@ fn create_category() -> Category {
         name: String::from("Something"),
         sub_categories: Some(vec![]),
         image_url: None,
-        is_root: false,
+        parent_id: None,
     }
 }
 
@@ -41,7 +41,7 @@ fn deserialise_list() {
         name: "Something".into(),
         sub_categories: None,
         image_url: None,
-        is_root: true,
+        parent_id: None,
     };
 
     let categories = vec![category, category_2];

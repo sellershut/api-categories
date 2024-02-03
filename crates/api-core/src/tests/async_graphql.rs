@@ -46,7 +46,7 @@ async fn gql_mutation() {
         .execute(
             r#"
               mutation {
-                input (category: {name: "Lorem", isRoot: false}) {
+                input (category: {name: "Lorem"}) {
                   name
                 }
               }

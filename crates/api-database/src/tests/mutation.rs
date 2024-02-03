@@ -12,14 +12,14 @@ fn create_category_item() -> Category {
         name: "TestCategoryInput".into(),
         sub_categories: None,
         image_url: None,
-        is_root: true,
+        parent_id: None,
     }
 }
 
 fn check_similarities(source: &Category, dest: &Category) {
     assert_eq!(source.name, dest.name);
     assert_eq!(source.sub_categories, dest.sub_categories);
-    assert_eq!(source.is_root, dest.is_root);
+    assert_eq!(source.parent_id, dest.parent_id);
 }
 
 #[tokio::test]
@@ -89,7 +89,7 @@ async fn update_category() -> Result<()> {
 
     let mut update = input.clone();
     update.name = "FooBar".to_string();
-    update.is_root = false;
+    update.parent_id = None;
 
     // This ID does exist
     let update_res = client

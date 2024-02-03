@@ -59,7 +59,7 @@ async fn gql_mutation() {
     let create_mutation = format!(
         r"
             mutation {{
-              createCategory(input: {{ name: {name}, subCategories: [], isRoot: true}}) {{
+              createCategory(input: {{ name: {name}, subCategories: []}}) {{
                 id
               }}
             }}
@@ -72,7 +72,7 @@ async fn gql_mutation() {
     let update_mutation = format!(
         r"
             mutation {{
-              updateCategory(id: {id}, input: {{ name: {name}, subCategories: [], isRoot: false}}) {{
+              updateCategory(id: {id}, input: {{ name: {name}, subCategories: []}}) {{
                 id
               }}
             }}

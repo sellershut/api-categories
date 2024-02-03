@@ -59,7 +59,10 @@ impl QueryCategories for Client {
             self.client.query(if let Some(parent) = id {
                 format!("SELECT sub_categories.*.* FROM {};", parent)
             } else {
-                format!("SELECT * FROM {} WHERE is_root=true", Collections::Category)
+                format!(
+                    "SELECT * FROM {} WHERE parent_id IS NOT NULL",
+                    Collections::Category
+                )
             })
         };
         if let Some((ref redis, ttl)) = self.redis {
