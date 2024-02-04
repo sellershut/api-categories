@@ -16,6 +16,50 @@ use crate::{
     Client,
 };
 
+async fn db_get_sub_categories(db: &Client, id: Option<&str>) -> Result<Vec<Category>, CoreError> {
+    match id {
+        Some(id) => {
+            let mut res = db
+                .client
+                .query(format!(
+                    "SELECT sub_categories.*.* FROM {}:⟨{}⟩",
+                    Collections::Category,
+                    id
+                ))
+                .await
+                .map_err(map_db_error)?;
+
+            let res: Option<Vec<DatabaseEntity>> =
+                res.take((0, "sub_categories")).map_err(map_db_error)?;
+
+            let categories = res
+                .ok_or(CoreError::Database("Database returned no items".into()))
+                .and_then(|vals: Vec<DatabaseEntity>| {
+                    vals.into_iter()
+                        .map(Category::try_from)
+                        .collect::<Result<Vec<Category>, CoreError>>()
+                })?;
+            Ok(categories)
+        }
+        None => {
+            let mut resp = db
+                .client
+                .query(format!(
+                    "SELECT * FROM {} WHERE parent_id is none or null",
+                    Collections::Category
+                ))
+                .await
+                .map_err(map_db_error)?;
+            let categories: Vec<DatabaseEntity> = resp.take(0).map_err(map_db_error)?;
+            let categories = categories
+                .into_iter()
+                .map(Category::try_from)
+                .collect::<Result<Vec<Category>, CoreError>>()?;
+            Ok(categories)
+        }
+    }
+}
+
 impl QueryCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
@@ -72,16 +116,7 @@ impl QueryCategories for Client {
         id: Option<impl AsRef<str> + Send + Debug>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
         let id = id.as_ref().map(|id| id.as_ref());
-        let caller = |id: Option<&str>| {
-            self.client.query(if let Some(parent) = id {
-                format!("SELECT sub_categories.*.* FROM {};", parent)
-            } else {
-                format!(
-                    "SELECT * FROM {} WHERE parent_id is none or null",
-                    Collections::Category
-                )
-            })
-        };
+
         if let Some((ref redis, ttl)) = self.redis {
             let cache_key = CacheKey::SubCategories { parent: id };
 
@@ -89,12 +124,7 @@ impl QueryCategories for Client {
             if let Some(categories) = categories {
                 Ok(categories.into_iter())
             } else {
-                let mut resp = caller(id).await.map_err(map_db_error)?;
-                let categories: Vec<DatabaseEntity> = resp.take(0).map_err(map_db_error)?;
-                let categories = categories
-                    .into_iter()
-                    .map(Category::try_from)
-                    .collect::<Result<Vec<Category>, CoreError>>()?;
+                let categories = db_get_sub_categories(self, id).await?;
 
                 if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
                     error!(key = %cache_key, "[redis update]: {e}");
@@ -102,12 +132,7 @@ impl QueryCategories for Client {
                 Ok(categories.into_iter())
             }
         } else {
-            let mut resp = caller(id).await.map_err(map_db_error)?;
-            let categories: Vec<DatabaseEntity> = resp.take(0).map_err(map_db_error)?;
-            let categories = categories
-                .into_iter()
-                .map(Category::try_from)
-                .collect::<Result<Vec<Category>, CoreError>>()?;
+            let categories = db_get_sub_categories(self, id).await?;
 
             Ok(categories.into_iter())
         }
