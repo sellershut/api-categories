@@ -1,5 +1,5 @@
 use api_core::{api::QueryCategories, reexports::uuid::Uuid, Category};
-use async_graphql::{Context, Object};
+use async_graphql::{Context, Object, SimpleObject};
 use tracing::instrument;
 
 use crate::graphql::{extract_db, query::Params};
@@ -8,6 +8,12 @@ use super::{pagination::paginate, ConnectionResult};
 
 #[derive(Default, Debug)]
 pub struct CategoryQuery;
+
+#[derive(SimpleObject)]
+pub struct SearchResult {
+    category: Category,
+    parent_name: Option<String>,
+}
 
 #[Object]
 impl CategoryQuery {
@@ -76,5 +82,27 @@ impl CategoryQuery {
         let categories = database.search(&query).await?;
 
         paginate(categories, p, 100).await
+    }
+
+    #[instrument(skip(ctx), err(Debug))]
+    async fn search_with_parent_name(
+        &self,
+        ctx: &Context<'_>,
+        #[graphql(validator(min_length = 1, max_length = 100))] query: String,
+        #[graphql(validator(min_length = 1, max_length = 100))] after: Option<String>,
+        #[graphql(validator(min_length = 1, max_length = 100))] before: Option<String>,
+        #[graphql(validator(minimum = 1, maximum = 100))] first: Option<i32>,
+        #[graphql(validator(minimum = 1, maximum = 100))] last: Option<i32>,
+    ) -> ConnectionResult<SearchResult> {
+        let p = Params::new(after, before, first, last)?;
+
+        let database = extract_db(ctx)?;
+        let res = database.search_with_parent_name(&query).await?;
+        let mapped = res.into_iter().map(|(category, parent_name)| SearchResult {
+            category,
+            parent_name,
+        });
+
+        paginate(mapped, p, 100).await
     }
 }

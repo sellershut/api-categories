@@ -168,6 +168,7 @@ dependencies = [
  "criterion",
  "dotenvy",
  "fake",
+ "futures-util",
  "meilisearch-sdk",
  "redis",
  "serde",

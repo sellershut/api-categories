@@ -224,3 +224,71 @@ impl QueryCategories for Client {
         }
     }
 }
+
+impl Client {
+    pub async fn search_with_parent_name(
+        &self,
+        query: &str,
+    ) -> Result<Vec<(Category, Option<String>)>, CoreError> {
+        if let Some(ref client) = self.search_client {
+            let index = client
+                .get_index("categories")
+                .await
+                .map_err(|e| CoreError::Other(e.to_string()))?;
+
+            let query = SearchQuery::new(&index).with_query(query.as_ref()).build();
+
+            let results: SearchResults<Category> = index
+                .execute_query(&query)
+                .await
+                .map_err(|e| CoreError::Other(e.to_string()))?;
+
+            let parent_ids: Vec<_> = results
+                .hits
+                .iter()
+                .filter_map(|f| f.result.parent_id.map(|parent_id| parent_id.to_string()))
+                .collect();
+            let parent_ids_str: Vec<&str> = parent_ids.iter().map(|f| f.as_str()).collect();
+
+            let futures = parent_ids_str
+                .iter()
+                .map(|parent_id| index.get_document::<Category>(parent_id));
+
+            let res: Vec<Category> = futures_util::future::try_join_all(futures)
+                .await
+                .map_err(|e| CoreError::Other(e.to_string()))?;
+
+            let search_results: Vec<_> = results
+                .hits
+                .into_iter()
+                .map(|hit| {
+                    let category = Category {
+                        id: hit.result.id,
+                        name: hit.result.name,
+                        sub_categories: hit.result.sub_categories,
+                        parent_id: hit.result.parent_id,
+                        image_url: hit.result.image_url,
+                    };
+                    let parent = if let Some(parent_id) = hit.result.parent_id {
+                        res.iter().find_map(|category| {
+                            if parent_id == category.id {
+                                Some(category.name.to_owned())
+                            } else {
+                                None
+                            }
+                        })
+                    } else {
+                        None
+                    };
+                    (category, parent)
+                })
+                .collect();
+
+            Ok(search_results)
+        } else {
+            Err(CoreError::Other(String::from(
+                "no client configured for search",
+            )))
+        }
+    }
+}
