@@ -2,9 +2,9 @@ use super::create_client;
 use anyhow::Result;
 use api_core::{
     api::{MutateCategories, QueryCategories},
+    reexports::uuid::Uuid,
     Category,
 };
-use uuid::Uuid;
 
 fn create_category_item() -> Category {
     Category {
@@ -38,7 +38,7 @@ async fn create_category() -> Result<()> {
     assert_eq!(base_count + 1, updated_categories.count());
     check_similarities(&input, &category);
 
-    client.delete_category(&input.id.to_string()).await?;
+    client.delete_category(&input.id).await?;
     Ok(())
 }
 
@@ -51,10 +51,10 @@ async fn create_get_by_id() -> Result<()> {
     let input = client.create_category(&category).await?;
     let id = input.id;
 
-    let get_by_id = client.get_category_by_id(&input.id.to_string()).await?;
+    let get_by_id = client.get_category_by_id(&input.id).await?;
     assert_eq!(get_by_id, Some(input));
 
-    client.delete_category(&id.to_string()).await?;
+    client.delete_category(&id).await?;
 
     Ok(())
 }
@@ -93,14 +93,14 @@ async fn update_category() -> Result<()> {
 
     // This ID does exist
     let update_res = client
-        .update_category(&input.id.to_string(), &update)
+        .update_category(&input.id, &update)
         .await?
         .expect("category to exist in db");
 
     assert_eq!(&update_res.id, &input.id);
     check_similarities(&update, &update_res);
 
-    client.delete_category(&input.id.to_string()).await?;
+    client.delete_category(&input.id).await?;
 
     Ok(())
 }
@@ -117,7 +117,7 @@ async fn delete_category() -> Result<()> {
     let input = client.create_category(&category).await?;
     // delete and check count
     let deleted_category = client
-        .delete_category(&input.id.to_string())
+        .delete_category(&input.id)
         .await?
         .expect("category to be deleted");
 
@@ -126,6 +126,6 @@ async fn delete_category() -> Result<()> {
     let final_count = client.get_categories().await?.count();
     assert_eq!(base_count, final_count);
 
-    client.delete_category(&input.id.to_string()).await?;
+    client.delete_category(&input.id).await?;
     Ok(())
 }

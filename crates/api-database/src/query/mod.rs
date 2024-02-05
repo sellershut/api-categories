@@ -1,7 +1,6 @@
-use std::fmt::Debug;
-
 use api_core::{
     api::{CoreError, QueryCategories},
+    reexports::uuid::Uuid,
     Category,
 };
 use meilisearch_sdk::{SearchQuery, SearchResults};
@@ -16,7 +15,7 @@ use crate::{
     Client,
 };
 
-async fn db_get_sub_categories(db: &Client, id: Option<&str>) -> Result<Vec<Category>, CoreError> {
+async fn db_get_sub_categories(db: &Client, id: Option<&Uuid>) -> Result<Vec<Category>, CoreError> {
     match id {
         Some(id) => {
             let mut res = db
@@ -113,10 +112,8 @@ impl QueryCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn get_sub_categories(
         &self,
-        id: Option<impl AsRef<str> + Send + Debug>,
+        id: Option<&Uuid>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
-        let id = id.as_ref().map(|id| id.as_ref());
-
         if let Some((ref redis, ttl)) = self.redis {
             let cache_key = CacheKey::SubCategories { parent: id };
 
@@ -139,17 +136,13 @@ impl QueryCategories for Client {
     }
 
     #[instrument(skip(self), err(Debug))]
-    async fn get_category_by_id(
-        &self,
-        id: impl AsRef<str> + Send + Debug,
-    ) -> Result<Option<Category>, CoreError> {
-        let create_id =
-            |id: &str| -> Thing { Thing::from((Collections::Category.to_string().as_str(), id)) };
-
-        let id = id.as_ref();
-        if id.is_empty() {
-            return Err(CoreError::Other("Id cannot be empty".into()));
-        }
+    async fn get_category_by_id(&self, id: &Uuid) -> Result<Option<Category>, CoreError> {
+        let create_id = |id: &Uuid| -> Thing {
+            Thing::from((
+                Collections::Category.to_string().as_str(),
+                id.to_string().as_str(),
+            ))
+        };
 
         if let Some((ref redis, ttl)) = self.redis {
             let cache_key = CacheKey::Category { id };
@@ -196,7 +189,7 @@ impl QueryCategories for Client {
 
     async fn search(
         &self,
-        query: impl AsRef<str> + Send + Debug,
+        query: impl AsRef<str> + Send + std::fmt::Debug,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
         if let Some(ref client) = self.search_client {
             let index = client

@@ -1,8 +1,8 @@
 use crate::tests::create_client;
 use anyhow::Result;
-use api_core::{api::QueryCategories, Category};
+use api_core::{api::QueryCategories, reexports::uuid::Uuid, Category};
 
-async fn check_categories_by_id(id: &str, expected_result: bool) -> Result<()> {
+async fn check_categories_by_id(id: &Uuid, expected_result: bool) -> Result<()> {
     let client = create_client(None).await?;
 
     match client.get_category_by_id(id).await {
@@ -27,7 +27,7 @@ async fn check_all(expected_result: bool) -> Result<()> {
     Ok(())
 }
 
-async fn check_sub_categories(id: Option<&str>, expected_result: bool) -> Result<()> {
+async fn check_sub_categories(id: Option<&Uuid>, expected_result: bool) -> Result<()> {
     let client = create_client(None).await?;
 
     match client.get_sub_categories(id).await {
@@ -51,9 +51,9 @@ async fn check_sub_categories(id: Option<&str>, expected_result: bool) -> Result
 
 #[tokio::test]
 async fn query_by_unavailable_id() -> Result<()> {
-    check_categories_by_id("justanid", false).await?;
-    check_categories_by_id("", false).await?;
-    check_categories_by_id("  ", false).await?;
+    check_categories_by_id(&Uuid::now_v7(), false).await?;
+    check_categories_by_id(&Uuid::now_v7(), false).await?;
+    check_categories_by_id(&Uuid::now_v7(), false).await?;
 
     Ok(())
 }
@@ -70,7 +70,7 @@ async fn query_by_available_id() -> Result<()> {
     let resp: Vec<Category> = res.take(0)?;
 
     if let Some(item) = resp.first() {
-        check_categories_by_id(&item.id.to_string(), true).await?;
+        check_categories_by_id(&item.id, true).await?;
     }
 
     Ok(())
@@ -86,7 +86,5 @@ async fn query_all() -> Result<()> {
 #[tokio::test]
 async fn query_sub_categories() -> Result<()> {
     check_sub_categories(None, true).await?;
-    check_sub_categories(Some("justanid"), true).await?;
-
     Ok(())
 }

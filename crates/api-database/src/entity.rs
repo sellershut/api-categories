@@ -1,7 +1,6 @@
-use api_core::{api::CoreError, Category};
+use api_core::{api::CoreError, reexports::uuid::Uuid, Category};
 use serde::{Deserialize, Serialize};
 use surrealdb::{opt::RecordId, sql::Id};
-use uuid::Uuid;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub(crate) struct DatabaseEntity {
@@ -36,10 +35,11 @@ impl TryFrom<DatabaseEntity> for Category {
                 .collect::<Result<Vec<Uuid>, _>>()
         })?;
 
-        let parent_id = entity.parent_id.map_or(
-            Ok::<Option<Result<uuid::Uuid, _>>, Self::Error>(None),
-            |f| Ok(Some(Uuid::parse_str(&id_to_string(&f.id)))),
-        )?;
+        let parent_id = entity
+            .parent_id
+            .map_or(Ok::<Option<Result<Uuid, _>>, Self::Error>(None), |f| {
+                Ok(Some(Uuid::parse_str(&id_to_string(&f.id))))
+            })?;
 
         Ok(Category {
             id,
