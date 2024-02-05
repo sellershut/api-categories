@@ -1,4 +1,7 @@
-use api_core::{api::MutateCategories, Category};
+use api_core::{
+    api::{MutateCategories, Uuid},
+    Category,
+};
 use api_database::Client;
 use async_graphql::{Context, Object};
 use tracing::instrument;
@@ -35,7 +38,7 @@ impl CategoryMutation {
     async fn update_category(
         &self,
         ctx: &Context<'_>,
-        id: String,
+        id: Uuid,
         input: Category,
     ) -> async_graphql::Result<Option<Category>> {
         let database = ctx.data::<Client>()?;
@@ -56,7 +59,7 @@ impl CategoryMutation {
     async fn delete_category(
         &self,
         ctx: &Context<'_>,
-        id: String,
+        id: Uuid,
     ) -> async_graphql::Result<Option<Category>> {
         let database = ctx.data::<Client>()?;
 

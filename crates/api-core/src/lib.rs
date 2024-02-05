@@ -25,5 +25,9 @@ pub struct Category {
     pub parent_id: Option<Uuid>,
 }
 
+pub mod reexports {
+    pub use uuid;
+}
+
 #[cfg(test)]
 mod tests;

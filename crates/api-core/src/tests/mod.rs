@@ -59,29 +59,27 @@ fn deserialise_list() {
 }
 
 #[tokio::test]
-async fn query_returns() {
+async fn trait_blank_queries() {
     use crate::api::LocalQueryCategories;
 
     let db = SampleDb.get_categories().await;
     assert!(db.is_ok());
 
+    let generated_id = Uuid::now_v7();
     let mut id = None;
     let db = SampleDb.get_sub_categories(id).await;
     assert!(db.is_ok());
 
-    id = Some("id");
+    id = Some(&generated_id);
     let db = SampleDb.get_sub_categories(id).await;
     assert!(db.is_ok());
 
-    let db = SampleDb.get_category_by_id("id").await;
+    let db = SampleDb.get_category_by_id(&generated_id).await;
     assert!(db.is_ok());
-
-    let db = SampleDb.get_category_by_id("").await;
-    assert!(db.is_err());
 }
 
 #[tokio::test]
-async fn mutation_returns() {
+async fn trait_blank_mutations() {
     use crate::api::LocalMutateCategories;
 
     let category = create_category();
@@ -89,10 +87,11 @@ async fn mutation_returns() {
     let db = SampleDb.create_category(&category).await;
     assert!(db.is_ok());
 
-    let db = SampleDb.update_category("some:id", &category).await;
+    let id = Uuid::now_v7();
+    let db = SampleDb.update_category(&id, &category).await;
     assert!(db.is_ok());
 
-    let db = SampleDb.delete_category("something:else").await;
+    let db = SampleDb.delete_category(&id).await;
     assert!(db.is_ok());
 }
 
@@ -102,13 +101,14 @@ async fn mutation_returns_send() {
 
     let category = create_category();
 
+    let id = Uuid::now_v7();
     let db = SampleDbSend.create_category(&category).await;
     assert!(db.is_ok());
 
-    let db = SampleDbSend.update_category("some:id", &category).await;
+    let db = SampleDbSend.update_category(&id, &category).await;
     assert!(db.is_ok());
 
-    let db = SampleDbSend.delete_category("something:else").await;
+    let db = SampleDbSend.delete_category(&id).await;
     assert!(db.is_ok());
 }
 
@@ -119,17 +119,15 @@ async fn query_returns_send() {
     let db = SampleDbSend.get_categories().await;
     assert!(db.is_ok());
 
+    let generated_id = Uuid::now_v7();
     let mut id = None;
     let db = SampleDbSend.get_sub_categories(id).await;
     assert!(db.is_ok());
 
-    id = Some("id");
+    id = Some(&generated_id);
     let db = SampleDbSend.get_sub_categories(id).await;
     assert!(db.is_ok());
 
-    let db = SampleDbSend.get_category_by_id("id").await;
+    let db = SampleDbSend.get_category_by_id(&generated_id).await;
     assert!(db.is_ok());
-
-    let db = SampleDbSend.get_category_by_id("").await;
-    assert!(db.is_err());
 }

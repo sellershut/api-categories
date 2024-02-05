@@ -1,12 +1,13 @@
 use std::fmt::Display;
 
+use api_core::reexports::uuid::Uuid;
 use redis::ToRedisArgs;
 
 #[derive(Clone, Copy)]
 pub enum CacheKey<'a> {
     AllCategories,
-    SubCategories { parent: Option<&'a str> },
-    Category { id: &'a str },
+    SubCategories { parent: Option<&'a Uuid> },
+    Category { id: &'a Uuid },
 }
 
 impl Display for CacheKey<'_> {
@@ -19,9 +20,9 @@ impl Display for CacheKey<'_> {
                 CacheKey::SubCategories { parent } => format!(
                     "parent={}",
                     match parent {
-                        Some(id) => id,
+                        Some(id) => id.to_string(),
                         None => {
-                            ""
+                            String::default()
                         }
                     }
                 ),

@@ -1,4 +1,6 @@
-use std::{fmt::Debug, str::FromStr};
+use std::str::FromStr;
+
+use uuid::Uuid;
 
 use crate::{
     api::{
@@ -17,20 +19,13 @@ impl LocalQueryCategories for SampleDb {
 
     async fn get_sub_categories(
         &self,
-        _id: Option<impl AsRef<str> + Send + Debug>,
+        _id: Option<&Uuid>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
         Ok([].into_iter())
     }
 
-    async fn get_category_by_id(
-        &self,
-        id: impl AsRef<str> + Send + Debug,
-    ) -> Result<Option<Category>, CoreError> {
-        if id.as_ref().is_empty() {
-            Err(CoreError::from_str("Id cannot be empty")?)
-        } else {
-            Ok(None)
-        }
+    async fn get_category_by_id(&self, _id: &Uuid) -> Result<Option<Category>, CoreError> {
+        Ok(None)
     }
 }
 
@@ -41,7 +36,7 @@ impl LocalMutateCategories for SampleDb {
 
     async fn update_category(
         &self,
-        id: impl AsRef<str> + Send + Debug,
+        id: &Uuid,
         data: &Category,
     ) -> Result<Option<Category>, CoreError> {
         if id.as_ref().is_empty() {
@@ -51,15 +46,8 @@ impl LocalMutateCategories for SampleDb {
         }
     }
 
-    async fn delete_category(
-        &self,
-        id: impl AsRef<str> + Send + Debug,
-    ) -> Result<Option<Category>, CoreError> {
-        if id.as_ref().is_empty() {
-            Err(CoreError::from_str("Id cannot be empty")?)
-        } else {
-            Ok(None)
-        }
+    async fn delete_category(&self, _id: &Uuid) -> Result<Option<Category>, CoreError> {
+        Ok(None)
     }
 }
 
@@ -70,25 +58,14 @@ impl MutateCategories for SampleDbSend {
 
     async fn update_category(
         &self,
-        id: impl AsRef<str> + Send + Debug,
+        _id: &Uuid,
         data: &Category,
     ) -> Result<Option<Category>, CoreError> {
-        if id.as_ref().is_empty() {
-            Err(CoreError::from_str("Id cannot be empty")?)
-        } else {
-            Ok(Some(data.to_owned()))
-        }
+        Ok(Some(data.to_owned()))
     }
 
-    async fn delete_category(
-        &self,
-        id: impl AsRef<str> + Send + Debug,
-    ) -> Result<Option<Category>, CoreError> {
-        if id.as_ref().is_empty() {
-            Err(CoreError::from_str("Id cannot be empty")?)
-        } else {
-            Ok(None)
-        }
+    async fn delete_category(&self, _id: &Uuid) -> Result<Option<Category>, CoreError> {
+        Ok(None)
     }
 }
 
@@ -99,19 +76,12 @@ impl QueryCategories for SampleDbSend {
 
     async fn get_sub_categories(
         &self,
-        _id: Option<impl AsRef<str> + Send + Debug>,
+        _id: Option<&Uuid>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
         Ok([].into_iter())
     }
 
-    async fn get_category_by_id(
-        &self,
-        id: impl AsRef<str> + Send + Debug,
-    ) -> Result<Option<Category>, CoreError> {
-        if id.as_ref().is_empty() {
-            Err(CoreError::from_str("Id cannot be empty")?)
-        } else {
-            Ok(None)
-        }
+    async fn get_category_by_id(&self, _id: &Uuid) -> Result<Option<Category>, CoreError> {
+        Ok(None)
     }
 }

@@ -1,4 +1,4 @@
-use api_core::{api::QueryCategories, Category};
+use api_core::{api::QueryCategories, reexports::uuid::Uuid, Category};
 use async_graphql::{Context, Object};
 use tracing::instrument;
 
@@ -33,7 +33,7 @@ impl CategoryQuery {
     async fn sub_categories(
         &self,
         ctx: &Context<'_>,
-        #[graphql(validator(min_length = 1, max_length = 100))] parent_id: Option<String>,
+        parent_id: Option<Uuid>,
         #[graphql(validator(min_length = 1, max_length = 100))] after: Option<String>,
         #[graphql(validator(min_length = 1, max_length = 100))] before: Option<String>,
         #[graphql(validator(minimum = 1, maximum = 100))] first: Option<i32>,
@@ -44,7 +44,7 @@ impl CategoryQuery {
         let database = extract_db(ctx)?;
 
         let categories = database
-            .get_sub_categories(parent_id.as_deref())
+            .get_sub_categories(parent_id.as_ref())
             .await
             .unwrap();
 
@@ -55,7 +55,7 @@ impl CategoryQuery {
     async fn category_by_id(
         &self,
         ctx: &Context<'_>,
-        #[graphql(validator(min_length = 1, max_length = 100))] id: String,
+        id: Uuid,
     ) -> async_graphql::Result<Option<Category>> {
         let database = extract_db(ctx)?;
 

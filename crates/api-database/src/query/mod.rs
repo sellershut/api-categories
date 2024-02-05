@@ -1,7 +1,6 @@
-use std::fmt::Debug;
-
 use api_core::{
     api::{CoreError, QueryCategories},
+    reexports::uuid::Uuid,
     Category,
 };
 use surrealdb::sql::Thing;
@@ -52,10 +51,9 @@ impl QueryCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn get_sub_categories(
         &self,
-        id: Option<impl AsRef<str> + Send + Debug>,
+        id: Option<&Uuid>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
-        let id = id.as_ref().map(|id| id.as_ref());
-        let caller = |id: Option<&str>| {
+        let caller = |id: Option<&Uuid>| {
             self.client.query(if let Some(parent) = id {
                 format!("SELECT sub_categories.*.* FROM {};", parent)
             } else {
@@ -97,17 +95,13 @@ impl QueryCategories for Client {
     }
 
     #[instrument(skip(self), err(Debug))]
-    async fn get_category_by_id(
-        &self,
-        id: impl AsRef<str> + Send + Debug,
-    ) -> Result<Option<Category>, CoreError> {
-        let create_id =
-            |id: &str| -> Thing { Thing::from((Collections::Category.to_string().as_str(), id)) };
-
-        let id = id.as_ref();
-        if id.is_empty() {
-            return Err(CoreError::Other("Id cannot be empty".into()));
-        }
+    async fn get_category_by_id(&self, id: &Uuid) -> Result<Option<Category>, CoreError> {
+        let create_id = |id: &Uuid| -> Thing {
+            Thing::from((
+                Collections::Category.to_string().as_str(),
+                id.to_string().as_str(),
+            ))
+        };
 
         if let Some((ref redis, ttl)) = self.redis {
             let cache_key = CacheKey::Category { id };

@@ -1,12 +1,10 @@
-use std::fmt::Debug;
-
 use api_core::{
     api::{CoreError, MutateCategories},
+    reexports::uuid::Uuid,
     Category,
 };
 use surrealdb::{opt::RecordId, sql::Thing};
 use tracing::instrument;
-use uuid::Uuid;
 
 use crate::{collections::Collections, entity::DatabaseEntity, Client};
 
@@ -41,7 +39,7 @@ impl MutateCategories for Client {
     #[instrument(skip(self, id), err(Debug))]
     async fn update_category(
         &self,
-        id: impl AsRef<str> + Send + Debug,
+        id: &Uuid,
         data: &Category,
     ) -> Result<Option<Category>, CoreError> {
         if let Some(ref parent) = data.parent_id {
@@ -54,8 +52,10 @@ impl MutateCategories for Client {
             }
         }
 
-        let id = id.as_ref();
-        let id = Thing::from((Collections::Category.to_string().as_str(), id));
+        let id = Thing::from((
+            Collections::Category.to_string().as_str(),
+            id.to_string().as_str(),
+        ));
 
         let input_category = InputCategory::from(data);
 
@@ -74,11 +74,11 @@ impl MutateCategories for Client {
     }
 
     #[instrument(skip(self, id), err(Debug))]
-    async fn delete_category(
-        &self,
-        id: impl AsRef<str> + Send + Debug,
-    ) -> Result<Option<Category>, CoreError> {
-        let id = Thing::from((Collections::Category.to_string().as_str(), id.as_ref()));
+    async fn delete_category(&self, id: &Uuid) -> Result<Option<Category>, CoreError> {
+        let id = Thing::from((
+            Collections::Category.to_string().as_str(),
+            id.to_string().as_ref(),
+        ));
 
         let res: Option<DatabaseEntity> = self.client.delete(id).await.unwrap();
         let res = match res {
