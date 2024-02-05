@@ -1,4 +1,4 @@
-use api_core::{api::QueryCategories, reexports::uuid::Uuid, Category};
+use api_core::{api::QueryCategories, Category};
 use async_graphql::{Context, Object, Subscription};
 use futures_util::{Stream, StreamExt};
 
@@ -38,8 +38,7 @@ impl CategoryChanged {
 
     async fn category(&self, ctx: &Context<'_>) -> async_graphql::Result<Option<Category>> {
         let database = extract_db(ctx)?;
-        let id = Uuid::parse_str(&self.id)?;
-        let category = database.get_category_by_id(&id).await?;
+        let category = database.get_category_by_id(&self.id).await?;
 
         Ok(category)
     }

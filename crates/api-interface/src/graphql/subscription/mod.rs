@@ -1,7 +1,6 @@
 pub(crate) mod broker;
 pub(crate) mod category;
-
-use async_graphql::ID;
+use api_core::reexports::uuid::Uuid;
 
 use super::mutation::MutationType;
 
@@ -11,5 +10,5 @@ pub struct Subscription(category::CategorySubscription);
 #[derive(Debug, Clone)]
 pub(crate) struct CategoryChanged {
     pub mutation_type: MutationType,
-    pub id: ID,
+    pub id: Uuid,
 }
