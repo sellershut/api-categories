@@ -27,6 +27,7 @@ criterion = { workspace = true, features = ["async_tokio"] }
 dotenvy.workspace = true
 fake.workspace = true
 tokio = { workspace = true, features = ["macros"] }
+uuid.workspace = true
 
 [[bench]]
 name = "database-insert"

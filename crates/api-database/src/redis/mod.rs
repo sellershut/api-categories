@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 // https://github.com/svix/svix-webhooks/blob/main/server/svix-server/src/redis/mod.rs
 mod cluster;
 
