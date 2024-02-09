@@ -2,7 +2,6 @@
 // https://github.com/svix/svix-webhooks/blob/main/server/svix-server/src/redis/mod.rs
 mod cluster;
 
-
 pub(crate) mod cache_keys;
 pub(crate) mod redis_query;
 
