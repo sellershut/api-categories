@@ -20,7 +20,11 @@ fn bench(c: &mut Criterion) {
     };
 
     let schema = rt
-        .block_on(api_interface::ApiSchemaBuilder::new(credentials, None))
+        .block_on(api_interface::ApiSchemaBuilder::new(
+            credentials,
+            None,
+            None,
+        ))
         .unwrap();
 
     let schema = schema.build();

@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use std::{fmt::Debug, str::FromStr};
 
 use uuid::Uuid;
 
@@ -26,6 +26,13 @@ impl LocalQueryCategories for SampleDb {
 
     async fn get_category_by_id(&self, _id: &Uuid) -> Result<Option<Category>, CoreError> {
         Ok(None)
+    }
+
+    async fn search(
+        &self,
+        _query: impl AsRef<str> + Debug + Send,
+    ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
+        Ok([].into_iter())
     }
 }
 
@@ -83,5 +90,12 @@ impl QueryCategories for SampleDbSend {
 
     async fn get_category_by_id(&self, _id: &Uuid) -> Result<Option<Category>, CoreError> {
         Ok(None)
+    }
+
+    async fn search(
+        &self,
+        _query: impl AsRef<str> + Debug + Send,
+    ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
+        Ok([].into_iter())
     }
 }
