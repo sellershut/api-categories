@@ -19,6 +19,7 @@ env:
   TEST_DATABASE_NAMESPACE: ci-tests
   TEST_REDIS_HOST: redis://localhost:6379
   MEILISEARCH_HOST: http://localhost:7700
+  MEILISEARCH_API_KEY:
 
 jobs:
   required:
