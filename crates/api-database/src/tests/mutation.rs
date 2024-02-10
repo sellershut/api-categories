@@ -24,7 +24,7 @@ fn check_similarities(source: &Category, dest: &Category) {
 
 #[tokio::test]
 async fn create_category() -> Result<()> {
-    let client = create_client(Some("test-mutation-create")).await?;
+    let client = create_client(Some("test-mutation-create"), false, false).await?;
 
     let all_categories = client.get_categories().await?;
 
@@ -46,7 +46,7 @@ async fn create_category() -> Result<()> {
 async fn create_get_by_id() -> Result<()> {
     let category = create_category_item();
 
-    let client = create_client(Some("test-mutation-update")).await?;
+    let client = create_client(Some("test-mutation-update"), false, false).await?;
 
     let input = client.create_category(&category).await?;
     let id = input.id;
@@ -83,7 +83,7 @@ async fn update_no_id() -> Result<()> {
 async fn update_category() -> Result<()> {
     let category = create_category_item();
 
-    let client = create_client(Some("test-mutation-update")).await?;
+    let client = create_client(Some("test-mutation-update"), false, false).await?;
 
     let input = client.create_category(&category).await?;
 
@@ -108,7 +108,7 @@ async fn update_category() -> Result<()> {
 #[tokio::test]
 async fn delete_category() -> Result<()> {
     let category = create_category_item();
-    let client = create_client(Some("test-mutation-delete")).await?;
+    let client = create_client(Some("test-mutation-delete"), false, false).await?;
 
     let all_categories = client.get_categories().await?;
 

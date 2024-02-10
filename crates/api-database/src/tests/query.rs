@@ -1,10 +1,12 @@
-use crate::tests::create_client;
+use crate::{
+    redis::{cache_keys::CacheKey, PoolLike, PooledConnectionLike},
+    tests::create_client,
+    Client,
+};
 use anyhow::Result;
 use api_core::{api::QueryCategories, reexports::uuid::Uuid, Category};
 
-async fn check_categories_by_id(id: &Uuid, expected_result: bool) -> Result<()> {
-    let client = create_client(None).await?;
-
+async fn check_categories_by_id(client: Client, id: &Uuid, expected_result: bool) -> Result<()> {
     match client.get_category_by_id(id).await {
         Ok(res) => {
             assert_eq!(res.is_some(), expected_result);
@@ -18,7 +20,7 @@ async fn check_categories_by_id(id: &Uuid, expected_result: bool) -> Result<()> 
 }
 
 async fn check_all(expected_result: bool) -> Result<()> {
-    let client = create_client(None).await?;
+    let client = create_client(None, false, false).await?;
 
     let res = client.get_categories().await;
 
@@ -27,9 +29,11 @@ async fn check_all(expected_result: bool) -> Result<()> {
     Ok(())
 }
 
-async fn check_sub_categories(id: Option<&Uuid>, expected_result: bool) -> Result<()> {
-    let client = create_client(None).await?;
-
+async fn check_sub_categories(
+    client: Client,
+    id: Option<&Uuid>,
+    expected_result: bool,
+) -> Result<()> {
     match client.get_sub_categories(id).await {
         Ok(categories) => {
             let categories: Vec<_> = categories.collect();
@@ -51,16 +55,18 @@ async fn check_sub_categories(id: Option<&Uuid>, expected_result: bool) -> Resul
 
 #[tokio::test]
 async fn query_by_unavailable_id() -> Result<()> {
-    check_categories_by_id(&Uuid::now_v7(), false).await?;
-    check_categories_by_id(&Uuid::now_v7(), false).await?;
-    check_categories_by_id(&Uuid::now_v7(), false).await?;
+    let client = create_client(None, false, false).await?;
+    check_categories_by_id(client, &Uuid::now_v7(), false).await?;
+
+    let client = create_client(None, true, false).await?;
+    check_categories_by_id(client, &Uuid::now_v7(), false).await?;
 
     Ok(())
 }
 
 #[tokio::test]
 async fn query_by_available_id() -> Result<()> {
-    let client = create_client(None).await?;
+    let client = create_client(None, false, false).await?;
 
     let mut res = client
         .client
@@ -70,8 +76,23 @@ async fn query_by_available_id() -> Result<()> {
     let resp: Vec<Category> = res.take(0)?;
 
     if let Some(item) = resp.first() {
-        check_categories_by_id(&item.id, true).await?;
+        check_categories_by_id(client, &item.id, true).await?;
     }
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn query_with_meilisearch() -> Result<()> {
+    let client = create_client(None, true, true).await?;
+
+    if let Some((ref redis, _)) = client.redis {
+        let mut redis = redis.get().await?;
+        redis.del::<_, ()>(CacheKey::AllCategories).await?;
+    }
+
+    let _results: Vec<_> = client.get_categories().await?.collect();
+    let res = client.search("some thing").await.unwrap();
 
     Ok(())
 }
@@ -85,6 +106,7 @@ async fn query_all() -> Result<()> {
 
 #[tokio::test]
 async fn query_sub_categories() -> Result<()> {
-    check_sub_categories(None, true).await?;
+    let client = create_client(None, true, true).await?;
+    check_sub_categories(client, None, true).await?;
     Ok(())
 }
