@@ -92,7 +92,8 @@ async fn query_with_meilisearch() -> Result<()> {
     }
 
     let _results: Vec<_> = client.get_categories().await?.collect();
-    let res = client.search("some thing").await.unwrap();
+    let res = client.search("some thing").await;
+    assert!(res.is_ok());
 
     Ok(())
 }
