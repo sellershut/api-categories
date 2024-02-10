@@ -59,54 +59,59 @@ async fn db_get_sub_categories(db: &Client, id: Option<&Uuid>) -> Result<Vec<Cat
     }
 }
 
-impl QueryCategories for Client {
-    #[instrument(skip(self), err(Debug))]
-    async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
-        if let Some((ref redis, ttl)) = self.redis {
-            let cache_key = CacheKey::AllCategories;
-            let categories = redis_query::query::<Vec<Category>>(cache_key, redis).await;
+async fn db_get_categories(db: &Client) -> Result<std::vec::IntoIter<Category>, CoreError> {
+    let categories = if let Some((ref redis, ttl)) = db.redis {
+        let cache_key = CacheKey::AllCategories;
+        let categories = redis_query::query::<Vec<Category>>(cache_key, redis).await;
 
-            if let Some(categories) = categories {
-                Ok(categories.into_iter())
-            } else {
-                let categories: Vec<DatabaseEntity> = self
-                    .client
-                    .select(Collections::Category)
-                    .await
-                    .map_err(map_db_error)?;
-
-                let categories = categories
-                    .into_iter()
-                    .map(Category::try_from)
-                    .collect::<Result<Vec<Category>, CoreError>>()?;
-
-                if let Some(ref client) = self.search_client {
-                    debug!("indexing categories for search");
-                    let index = client.index("categories");
-                    index
-                        .add_documents(&categories, Some("id"))
-                        .await
-                        .map_err(|e| CoreError::Other(e.to_string()))?;
-                }
-
-                if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
-                    error!(key = %cache_key, "[redis update]: {e}");
-                }
-
-                Ok(categories.into_iter())
-            }
+        if let Some(categories) = categories {
+            categories
         } else {
-            let categories: Vec<DatabaseEntity> = self
+            let categories: Vec<DatabaseEntity> = db
                 .client
                 .select(Collections::Category)
                 .await
                 .map_err(map_db_error)?;
+
             let categories = categories
                 .into_iter()
                 .map(Category::try_from)
                 .collect::<Result<Vec<Category>, CoreError>>()?;
-            Ok(categories.into_iter())
+
+            if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
+                error!(key = %cache_key, "[redis update]: {e}");
+            }
+
+            categories
         }
+    } else {
+        let categories: Vec<DatabaseEntity> = db
+            .client
+            .select(Collections::Category)
+            .await
+            .map_err(map_db_error)?;
+        categories
+            .into_iter()
+            .map(Category::try_from)
+            .collect::<Result<Vec<Category>, CoreError>>()?
+    };
+
+    if let Some(ref client) = db.search_client {
+        debug!("indexing categories for search");
+        let index = client.index("categories");
+        index
+            .add_documents(&categories, Some("id"))
+            .await
+            .map_err(|e| CoreError::Other(e.to_string()))?;
+    }
+
+    Ok(categories.into_iter())
+}
+
+impl QueryCategories for Client {
+    #[instrument(skip(self), err(Debug))]
+    async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
+        db_get_categories(&self).await
     }
 
     #[instrument(skip(self), err(Debug))]
@@ -231,60 +236,71 @@ impl Client {
         query: &str,
     ) -> Result<Vec<(Category, Option<String>)>, CoreError> {
         if let Some(ref client) = self.search_client {
-            let index = client
-                .get_index("categories")
-                .await
-                .map_err(|e| CoreError::Other(e.to_string()))?;
+            let mut index = None;
+            for _retries in 0..3 {
+                if let Ok(idx) = client.get_index("categories").await {
+                    index = Some(idx);
+                    break;
+                } else {
+                    let _categories = db_get_categories(self).await?;
+                }
+            }
+            match index {
+                Some(index) => {
+                    let query = SearchQuery::new(&index).with_query(query.as_ref()).build();
 
-            let query = SearchQuery::new(&index).with_query(query.as_ref()).build();
+                    let results: SearchResults<Category> = index
+                        .execute_query(&query)
+                        .await
+                        .map_err(|e| CoreError::Other(e.to_string()))?;
 
-            let results: SearchResults<Category> = index
-                .execute_query(&query)
-                .await
-                .map_err(|e| CoreError::Other(e.to_string()))?;
+                    let parent_ids: Vec<_> = results
+                        .hits
+                        .iter()
+                        .filter_map(|f| f.result.parent_id.map(|parent_id| parent_id.to_string()))
+                        .collect();
+                    let parent_ids_str: Vec<&str> = parent_ids.iter().map(|f| f.as_str()).collect();
 
-            let parent_ids: Vec<_> = results
-                .hits
-                .iter()
-                .filter_map(|f| f.result.parent_id.map(|parent_id| parent_id.to_string()))
-                .collect();
-            let parent_ids_str: Vec<&str> = parent_ids.iter().map(|f| f.as_str()).collect();
+                    let futures = parent_ids_str
+                        .iter()
+                        .map(|parent_id| index.get_document::<Category>(parent_id));
 
-            let futures = parent_ids_str
-                .iter()
-                .map(|parent_id| index.get_document::<Category>(parent_id));
+                    let res: Vec<Category> = futures_util::future::try_join_all(futures)
+                        .await
+                        .map_err(|e| CoreError::Other(e.to_string()))?;
 
-            let res: Vec<Category> = futures_util::future::try_join_all(futures)
-                .await
-                .map_err(|e| CoreError::Other(e.to_string()))?;
-
-            let search_results: Vec<_> = results
-                .hits
-                .into_iter()
-                .map(|hit| {
-                    let category = Category {
-                        id: hit.result.id,
-                        name: hit.result.name,
-                        sub_categories: hit.result.sub_categories,
-                        parent_id: hit.result.parent_id,
-                        image_url: hit.result.image_url,
-                    };
-                    let parent = if let Some(parent_id) = hit.result.parent_id {
-                        res.iter().find_map(|category| {
-                            if parent_id == category.id {
-                                Some(category.name.to_owned())
+                    let search_results: Vec<_> = results
+                        .hits
+                        .into_iter()
+                        .map(|hit| {
+                            let category = Category {
+                                id: hit.result.id,
+                                name: hit.result.name,
+                                sub_categories: hit.result.sub_categories,
+                                parent_id: hit.result.parent_id,
+                                image_url: hit.result.image_url,
+                            };
+                            let parent = if let Some(parent_id) = hit.result.parent_id {
+                                res.iter().find_map(|category| {
+                                    if parent_id == category.id {
+                                        Some(category.name.to_owned())
+                                    } else {
+                                        None
+                                    }
+                                })
                             } else {
                                 None
-                            }
+                            };
+                            (category, parent)
                         })
-                    } else {
-                        None
-                    };
-                    (category, parent)
-                })
-                .collect();
+                        .collect();
 
-            Ok(search_results)
+                    Ok(search_results)
+                }
+                None => Err(CoreError::Other(
+                    "items could not be indexed for search".into(),
+                )),
+            }
         } else {
             Err(CoreError::Other(String::from(
                 "no client configured for search",
