@@ -36,7 +36,7 @@ async fn create_client(
         with_ns.unwrap_or(&db_namespace),
         &db_name,
         if with_redis {
-            Some((&redis_host, false, 10, 1000000))
+            Some((&redis_host, false, 10, 5000))
         } else {
             None
         },
