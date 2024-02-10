@@ -82,7 +82,7 @@ jobs:
       redis:
         image: redis:alpine
         # Set health checks to wait until redis has started
-        options: |
+        options: >-
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
@@ -92,7 +92,7 @@ jobs:
       meilisearch:
         image: getmeili/meilisearch
         # Set health checks to wait until meilisearch has started
-        options: |
+        options: >-
           --health-cmd "curl -f 'http://localhost:7700'"
           --health-interval 10s
           --health-timeout 5s
