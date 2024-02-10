@@ -18,6 +18,7 @@ env:
   TEST_DATABASE_NAME: root
   TEST_DATABASE_NAMESPACE: ci-tests
   TEST_REDIS_HOST: redis://localhost:6379
+  MEILISEARCH_HOST: http://localhost:7700
 
 jobs:
   required:
@@ -81,13 +82,23 @@ jobs:
       redis:
         image: redis:alpine
         # Set health checks to wait until redis has started
-        options: >-
+        options: |
           --health-cmd "redis-cli ping"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
         ports:
           - 6379:6379
+      meilisearch:
+        image: getmeili/meilisearch
+        # Set health checks to wait until meilisearch has started
+        options: |
+          --health-cmd "curl -f 'http://localhost:7700'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 7700:7700
     steps:
       - name: install surreal
         run: |
