@@ -111,7 +111,7 @@ async fn db_get_categories(db: &Client) -> Result<std::vec::IntoIter<Category>, 
 impl QueryCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
-        db_get_categories(&self).await
+        db_get_categories(self).await
     }
 
     #[instrument(skip(self), err(Debug))]
