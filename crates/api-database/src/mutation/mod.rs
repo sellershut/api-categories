@@ -95,7 +95,7 @@ impl MutateCategories for Client {
 #[derive(serde::Serialize)]
 struct InputCategory<'a> {
     name: &'a str,
-    sub_categories: Option<Vec<RecordId>>,
+    sub_categories: Vec<RecordId>,
     image_url: Option<&'a str>,
     parent_id: Option<RecordId>,
 }
@@ -104,11 +104,11 @@ impl<'a> From<&'a Category> for InputCategory<'a> {
     fn from(value: &'a Category) -> Self {
         Self {
             name: &value.name,
-            sub_categories: value.sub_categories.as_ref().map(|f| {
-                f.iter()
-                    .map(|str| RecordId::from(("category", str.to_string().as_str())))
-                    .collect()
-            }),
+            sub_categories: value
+                .sub_categories
+                .iter()
+                .map(|f| RecordId::from(("category", f.to_string().as_str())))
+                .collect(),
             image_url: value.image_url.as_deref(),
             parent_id: value
                 .parent_id

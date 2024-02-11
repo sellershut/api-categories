@@ -10,7 +10,7 @@ fn create_category() -> Category {
     Category {
         id: Uuid::now_v7(),
         name: String::from("Something"),
-        sub_categories: Some(vec![]),
+        sub_categories: vec![],
         image_url: None,
         parent_id: None,
     }
@@ -39,7 +39,7 @@ fn deserialise_list() {
     let category_2 = Category {
         id: Uuid::now_v7(),
         name: "Something".into(),
-        sub_categories: None,
+        sub_categories: vec![],
         image_url: None,
         parent_id: None,
     };

@@ -10,7 +10,7 @@ fn create_category_item() -> Category {
     Category {
         id: Uuid::now_v7(),
         name: "TestCategoryInput".into(),
-        sub_categories: None,
+        sub_categories: vec![],
         image_url: None,
         parent_id: None,
     }
