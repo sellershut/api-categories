@@ -22,11 +22,6 @@ impl std::fmt::Display for Collections {
 
 impl<R> IntoResource<Vec<R>> for Collections {
     fn into_resource(self) -> Result<Resource, surrealdb::Error> {
-        Ok(Resource::Table(Table(
-            match self {
-                Collections::Category => "category",
-            }
-            .to_owned(),
-        )))
+        Ok(Resource::Table(Table(self.to_string())))
     }
 }
