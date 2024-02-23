@@ -152,9 +152,9 @@ impl QueryCategories for Client {
         if let Some((ref redis, ttl)) = self.redis {
             let cache_key = CacheKey::Category { id };
 
-            let category = redis_query::query::<Category>(cache_key, redis).await;
+            let category = redis_query::query::<Option<Category>>(cache_key, redis).await;
 
-            if category.is_some() {
+            if let Some(category) = category {
                 Ok(category)
             } else {
                 let id = create_id(id);
