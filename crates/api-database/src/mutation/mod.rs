@@ -7,7 +7,7 @@ use surrealdb::{opt::RecordId, sql::Thing};
 use tracing::{error, instrument};
 
 use crate::{
-    collections::Collections,
+    collections::Collection,
     entity::DatabaseEntity,
     map_db_error,
     redis::{cache_keys::CacheKey, PoolLike, PooledConnectionLike},
@@ -79,7 +79,7 @@ impl MutateCategories for Client {
         }
 
         let id = Thing::from((
-            Collections::Category.to_string().as_str(),
+            Collection::Category.to_string().as_str(),
             id.to_string().as_str(),
         ));
 
@@ -124,7 +124,7 @@ impl MutateCategories for Client {
     #[instrument(skip(self, id), err(Debug))]
     async fn delete_category(&self, id: &Uuid) -> Result<Option<Category>, CoreError> {
         let id = Thing::from((
-            Collections::Category.to_string().as_str(),
+            Collection::Category.to_string().as_str(),
             id.to_string().as_ref(),
         ));
 
