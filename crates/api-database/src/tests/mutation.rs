@@ -59,26 +59,6 @@ async fn create_get_by_id() -> Result<()> {
     Ok(())
 }
 
-/* #[tokio::test]
-async fn update_no_id() -> Result<()> {
-    let mut update = create_category_item();
-
-    let client = create_client(Some("test-mutation-bad-id")).await?;
-
-    update.name = "FooBar".to_string();
-    update.id = Id::default();
-    update.is_root = false;
-
-    // Empty IDs return errors
-    let update_res = client
-        .update_category(&update.id.to_string(), &update)
-        .await;
-
-    assert!(update_res.is_err());
-
-    Ok(())
-} */
-
 #[tokio::test]
 async fn update_category() -> Result<()> {
     let category = create_category_item();

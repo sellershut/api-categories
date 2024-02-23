@@ -1,9 +1,12 @@
+use serde::{Deserialize, Serialize};
 use surrealdb::{
     opt::{IntoResource, Resource},
     sql::Table,
 };
 
 #[non_exhaustive]
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "lowercase")]
 pub(crate) enum Collections {
     Category,
 }
