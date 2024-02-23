@@ -60,7 +60,7 @@ async fn db_get_sub_categories(db: &Client, id: Option<&Uuid>) -> Result<Vec<Cat
 }
 
 async fn db_get_categories(db: &Client) -> Result<std::vec::IntoIter<Category>, CoreError> {
-    let categories = if let Some((ref redis, ttl)) = db.redis {
+    let categories = if let Some((ref redis, _ttl)) = db.redis {
         let cache_key = CacheKey::AllCategories;
         let categories = redis_query::query::<Vec<Category>>(cache_key, redis).await;
 
@@ -78,7 +78,7 @@ async fn db_get_categories(db: &Client) -> Result<std::vec::IntoIter<Category>, 
                 .map(Category::try_from)
                 .collect::<Result<Vec<Category>, CoreError>>()?;
 
-            if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
+            if let Err(e) = redis_query::update(cache_key, redis, &categories, None).await {
                 error!(key = %cache_key, "[redis update]: {e}");
             }
 
@@ -119,7 +119,7 @@ impl QueryCategories for Client {
         &self,
         id: Option<&Uuid>,
     ) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
-        if let Some((ref redis, ttl)) = self.redis {
+        if let Some((ref redis, _ttl)) = self.redis {
             let cache_key = CacheKey::SubCategories { parent: id };
 
             let categories = redis_query::query::<Vec<Category>>(cache_key, redis).await;
@@ -128,7 +128,7 @@ impl QueryCategories for Client {
             } else {
                 let categories = db_get_sub_categories(self, id).await?;
 
-                if let Err(e) = redis_query::update(cache_key, redis, &categories, ttl).await {
+                if let Err(e) = redis_query::update(cache_key, redis, &categories, None).await {
                     error!(key = %cache_key, "[redis update]: {e}");
                 }
                 Ok(categories.into_iter())
@@ -149,7 +149,7 @@ impl QueryCategories for Client {
             ))
         };
 
-        if let Some((ref redis, ttl)) = self.redis {
+        if let Some((ref redis, _)) = self.redis {
             let cache_key = CacheKey::Category { id };
 
             let category = redis_query::query::<Option<Category>>(cache_key, redis).await;
@@ -169,7 +169,9 @@ impl QueryCategories for Client {
                     }
                 });
 
-                if let Err(e) = redis_query::update(cache_key, redis, category.as_ref(), ttl).await
+                if let Err(e) =
+                    // set ttl to 5 mins
+                    redis_query::update(cache_key, redis, category.as_ref(), None).await
                 {
                     error!(key = %cache_key, "[redis update]: {e}");
                 }
@@ -202,9 +204,8 @@ impl QueryCategories for Client {
                 if let Ok(idx) = client.get_index("categories").await {
                     index = Some(idx);
                     break;
-                } else {
-                    let _categories = db_get_categories(self).await?;
                 }
+                let _categories = db_get_categories(self).await?;
             }
             match index {
                 Some(index) => {
@@ -252,9 +253,8 @@ impl Client {
                 if let Ok(idx) = client.get_index("categories").await {
                     index = Some(idx);
                     break;
-                } else {
-                    let _categories = db_get_categories(self).await?;
                 }
+                let _categories = db_get_categories(self).await?;
             }
             match index {
                 Some(index) => {
