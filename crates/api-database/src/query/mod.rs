@@ -8,7 +8,7 @@ use surrealdb::sql::Thing;
 use tracing::{debug, error, instrument};
 
 use crate::{
-    collections::Collections,
+    collections::Collection,
     entity::DatabaseEntity,
     map_db_error,
     redis::{cache_keys::CacheKey, redis_query},
@@ -23,7 +23,7 @@ async fn db_get_sub_categories(db: &Client, id: Option<&Uuid>) -> Result<Vec<Cat
                 .query("SELECT sub_categories.*.* FROM type::thing($record)")
                 .bind((
                     "record",
-                    Thing::from((Collections::Category.to_string(), id.to_string())),
+                    Thing::from((Collection::Category.to_string(), id.to_string())),
                 ))
                 .await
                 .map_err(map_db_error)?;
@@ -44,7 +44,7 @@ async fn db_get_sub_categories(db: &Client, id: Option<&Uuid>) -> Result<Vec<Cat
             let mut resp = db
                 .client
                 .query("SELECT * FROM type::table($table) WHERE parent_id is none or null")
-                .bind(("table", Collections::Category))
+                .bind(("table", Collection::Category))
                 .await
                 .map_err(map_db_error)?;
             let categories: Vec<DatabaseEntity> = resp.take(0).map_err(map_db_error)?;
@@ -70,7 +70,7 @@ async fn db_get_categories(
         } else {
             let categories: Vec<DatabaseEntity> = db
                 .client
-                .select(Collections::Category)
+                .select(Collection::Category)
                 .await
                 .map_err(map_db_error)?;
 
@@ -88,7 +88,7 @@ async fn db_get_categories(
     } else {
         let categories: Vec<DatabaseEntity> = db
             .client
-            .select(Collections::Category)
+            .select(Collection::Category)
             .await
             .map_err(map_db_error)?;
         categories
@@ -151,7 +151,7 @@ impl QueryCategories for Client {
     async fn get_category_by_id(&self, id: &Uuid) -> Result<Option<Category>, CoreError> {
         let create_id = |id: &Uuid| -> Thing {
             Thing::from((
-                Collections::Category.to_string().as_str(),
+                Collection::Category.to_string().as_str(),
                 id.to_string().as_str(),
             ))
         };
