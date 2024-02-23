@@ -20,10 +20,10 @@ async fn db_get_sub_categories(db: &Client, id: Option<&Uuid>) -> Result<Vec<Cat
         Some(id) => {
             let mut res = db
                 .client
-                .query(format!(
-                    "SELECT sub_categories.*.* FROM {}:⟨{}⟩",
-                    Collections::Category,
-                    id
+                .query("SELECT sub_categories.*.* FROM type::thing($record)")
+                .bind((
+                    "record",
+                    Thing::from((Collections::Category.to_string(), id.to_string())),
                 ))
                 .await
                 .map_err(map_db_error)?;
@@ -43,10 +43,8 @@ async fn db_get_sub_categories(db: &Client, id: Option<&Uuid>) -> Result<Vec<Cat
         None => {
             let mut resp = db
                 .client
-                .query(format!(
-                    "SELECT * FROM {} WHERE parent_id is none or null",
-                    Collections::Category
-                ))
+                .query("SELECT * FROM type::table($table) WHERE parent_id is none or null")
+                .bind(("table", Collections::Category))
                 .await
                 .map_err(map_db_error)?;
             let categories: Vec<DatabaseEntity> = resp.take(0).map_err(map_db_error)?;
@@ -59,7 +57,10 @@ async fn db_get_sub_categories(db: &Client, id: Option<&Uuid>) -> Result<Vec<Cat
     }
 }
 
-async fn db_get_categories(db: &Client) -> Result<std::vec::IntoIter<Category>, CoreError> {
+async fn db_get_categories(
+    db: &Client,
+    wait_for_completion: bool,
+) -> Result<std::vec::IntoIter<Category>, CoreError> {
     let categories = if let Some((ref redis, _ttl)) = db.redis {
         let cache_key = CacheKey::AllCategories;
         let categories = redis_query::query::<Vec<Category>>(cache_key, redis).await;
@@ -99,10 +100,16 @@ async fn db_get_categories(db: &Client) -> Result<std::vec::IntoIter<Category>, 
     if let Some(ref client) = db.search_client {
         debug!("indexing categories for search");
         let index = client.index("categories");
-        index
+        let task = index
             .add_documents(&categories, Some("id"))
             .await
             .map_err(|e| CoreError::Other(e.to_string()))?;
+
+        if wait_for_completion {
+            if let Err(e) = task.wait_for_completion(client, None, None).await {
+                error!("{e}");
+            }
+        }
     }
 
     Ok(categories.into_iter())
@@ -111,7 +118,7 @@ async fn db_get_categories(db: &Client) -> Result<std::vec::IntoIter<Category>, 
 impl QueryCategories for Client {
     #[instrument(skip(self), err(Debug))]
     async fn get_categories(&self) -> Result<impl ExactSizeIterator<Item = Category>, CoreError> {
-        db_get_categories(self).await
+        db_get_categories(self, false).await
     }
 
     #[instrument(skip(self), err(Debug))]
@@ -205,7 +212,7 @@ impl QueryCategories for Client {
                     index = Some(idx);
                     break;
                 }
-                let _categories = db_get_categories(self).await?;
+                let _categories = db_get_categories(self, true).await?;
             }
             match index {
                 Some(index) => {
@@ -254,7 +261,7 @@ impl Client {
                     index = Some(idx);
                     break;
                 }
-                let _categories = db_get_categories(self).await?;
+                let _categories = db_get_categories(self, true).await?;
             }
             match index {
                 Some(index) => {

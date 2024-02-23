@@ -6,8 +6,14 @@ use redis::ToRedisArgs;
 #[derive(Clone, Copy)]
 pub enum CacheKey<'a> {
     AllCategories,
-    SubCategories { parent: Option<&'a Uuid> },
-    Category { id: &'a Uuid },
+    SubCategories {
+        parent: Option<&'a Uuid>,
+    },
+    Category {
+        id: &'a Uuid,
+    },
+    #[cfg(test)]
+    TestOnly,
 }
 
 impl Display for CacheKey<'_> {
@@ -27,6 +33,10 @@ impl Display for CacheKey<'_> {
                     }
                 ),
                 CacheKey::Category { id } => format!("id={id}"),
+                #[cfg(test)]
+                CacheKey::TestOnly => {
+                    "test".to_string()
+                }
             }
         )
     }
