@@ -4,9 +4,15 @@ use api_core::{
     Category,
 };
 use surrealdb::{opt::RecordId, sql::Thing};
-use tracing::instrument;
+use tracing::{error, instrument};
 
-use crate::{collections::Collections, entity::DatabaseEntity, map_db_error, Client};
+use crate::{
+    collections::Collections,
+    entity::DatabaseEntity,
+    map_db_error,
+    redis::{cache_keys::CacheKey, PoolLike, PooledConnectionLike},
+    Client,
+};
 
 impl MutateCategories for Client {
     #[instrument(skip(self), err(Debug))]
@@ -32,7 +38,25 @@ impl MutateCategories for Client {
             .map_err(map_db_error)?;
 
         match item {
-            Some(e) => Category::try_from(e),
+            Some(e) => {
+                let category = Category::try_from(e)?;
+
+                if let Some((ref redis, _ttl)) = self.redis {
+                    let sub_categories = CacheKey::SubCategories {
+                        parent: category.parent_id.as_ref(),
+                    };
+
+                    let mut redis = redis.get().await.unwrap();
+                    let mut pipeline = redis::Pipeline::new();
+                    pipeline.del(CacheKey::AllCategories).del(sub_categories);
+
+                    if let Err(e) = redis.query_async_pipeline::<()>(pipeline).await {
+                        error!("{e}");
+                    }
+                }
+
+                Ok(category)
+            }
             None => Err(CoreError::Unreachable),
         }
     }
@@ -68,7 +92,29 @@ impl MutateCategories for Client {
             .await
             .map_err(map_db_error)?;
         let res = match item {
-            Some(e) => Some(Category::try_from(e)?),
+            Some(e) => {
+                let category = Category::try_from(e)?;
+
+                if let Some((ref redis, _ttl)) = self.redis {
+                    let sub_categories = CacheKey::SubCategories {
+                        parent: category.parent_id.as_ref(),
+                    };
+                    let category_cache_key = CacheKey::Category { id: &category.id };
+
+                    let mut redis = redis.get().await.unwrap();
+                    let mut pipeline = redis::Pipeline::new();
+                    pipeline
+                        .del(CacheKey::AllCategories)
+                        .del(sub_categories)
+                        .del(category_cache_key);
+
+                    if let Err(e) = redis.query_async_pipeline::<()>(pipeline).await {
+                        error!("{e}");
+                    }
+                }
+
+                Some(category)
+            }
             None => None,
         };
 
@@ -84,7 +130,28 @@ impl MutateCategories for Client {
 
         let res: Option<DatabaseEntity> = self.client.delete(id).await.map_err(map_db_error)?;
         let res = match res {
-            Some(e) => Some(Category::try_from(e)?),
+            Some(e) => {
+                let category = Category::try_from(e)?;
+
+                if let Some((ref redis, _ttl)) = self.redis {
+                    let sub_categories = CacheKey::SubCategories {
+                        parent: category.parent_id.as_ref(),
+                    };
+                    let category_cache_key = CacheKey::Category { id: &category.id };
+
+                    let mut redis = redis.get().await.unwrap();
+                    let mut pipeline = redis::Pipeline::new();
+                    pipeline
+                        .del(CacheKey::AllCategories)
+                        .del(sub_categories)
+                        .del(category_cache_key);
+
+                    if let Err(e) = redis.query_async_pipeline::<()>(pipeline).await {
+                        error!("{e}");
+                    }
+                }
+                Some(category)
+            }
             None => None,
         };
 
@@ -95,7 +162,7 @@ impl MutateCategories for Client {
 #[derive(serde::Serialize)]
 struct InputCategory<'a> {
     name: &'a str,
-    sub_categories: Option<Vec<RecordId>>,
+    sub_categories: Vec<RecordId>,
     image_url: Option<&'a str>,
     parent_id: Option<RecordId>,
 }
@@ -104,11 +171,11 @@ impl<'a> From<&'a Category> for InputCategory<'a> {
     fn from(value: &'a Category) -> Self {
         Self {
             name: &value.name,
-            sub_categories: value.sub_categories.as_ref().map(|f| {
-                f.iter()
-                    .map(|str| RecordId::from(("category", str.to_string().as_str())))
-                    .collect()
-            }),
+            sub_categories: value
+                .sub_categories
+                .iter()
+                .map(|f| RecordId::from(("category", f.to_string().as_str())))
+                .collect(),
             image_url: value.image_url.as_deref(),
             parent_id: value
                 .parent_id

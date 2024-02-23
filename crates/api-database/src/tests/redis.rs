@@ -1,6 +1,9 @@
 use anyhow::Result;
 
-use crate::redis::{PoolLike, PooledConnectionLike, RedisPool};
+use crate::redis::{
+    redis_query::{query, update},
+    PoolLike, PooledConnectionLike, RedisPool,
+};
 
 async fn get_pool(redis_dsn: &str, max_pool_size: u16, is_cluster: bool) -> RedisPool {
     match is_cluster {
@@ -61,6 +64,7 @@ async fn redis_list_check() -> Result<()> {
     let pool = client().await;
     let mut pool = pool.get().await.unwrap();
     let key = "HJIUN";
+    pool.del::<_, ()>(key).await?;
 
     let res = pool.lpop::<&str, ()>(key, None).await;
     dbg!(&res);
@@ -106,6 +110,25 @@ async fn redis_sets_check() -> Result<()> {
         .await;
     dbg!(&res);
     assert!(res.is_ok());
+
+    Ok(())
+}
+
+#[tokio::test]
+async fn redis_encode_error() -> Result<()> {
+    let pool = client().await;
+
+    update(
+        crate::redis::cache_keys::CacheKey::TestOnly,
+        &pool,
+        10,
+        Some(1000),
+    )
+    .await
+    .expect("redis test");
+
+    let res_fail = query::<Vec<String>>(crate::redis::cache_keys::CacheKey::TestOnly, &pool).await;
+    assert!(res_fail.is_none());
 
     Ok(())
 }

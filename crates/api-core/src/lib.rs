@@ -18,7 +18,8 @@ pub struct Category {
     /// Category name
     pub name: String,
     /// A list of IDs that are subcategories for the current item
-    pub sub_categories: Option<Vec<Uuid>>, // empty vec wont work for playground type
+    #[cfg_attr(feature = "async-graphql", graphql(default))]
+    pub sub_categories: Vec<Uuid>,
     /// An image representing the current ID
     pub image_url: Option<String>,
     /// Id of this category's parent

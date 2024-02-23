@@ -45,7 +45,7 @@ fn bench(c: &mut Criterion) {
     let category = Category {
         id: Uuid::now_v7(),
         name: words,
-        sub_categories: Some(sub_categories),
+        sub_categories,
         image_url: None,
         parent_id: None,
     };
